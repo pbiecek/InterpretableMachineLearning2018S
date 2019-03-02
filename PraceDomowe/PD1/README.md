@@ -4,7 +4,7 @@ Czas na realizację: do 8 marca EOD
 
 ## Wprowadzenie:
 
-Flowingdata opisał kilka dni temu ciekawe dane dotyczące stabilności związków
+Flowingdata opisał kilka dni temu ciekawe dane dotyczące stabilności związków (HCMST: How Couples Meet and Stay Together)
 https://flowingdata.com/2019/02/26/probability-you-will-break-up-with-your-partner/
 
 Dane wykorzystane w badaniu są dostępne tutaj:
