@@ -1,0 +1,55 @@
+---
+title: "IML"
+author: "Piotr Pasza Storozenko"
+date: "22 02 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(mlr)
+library(titanic)
+```
+
+
+```{r}
+df <- titanic_train
+```
+
+```{r}
+ndf <- df %>% select(-c(Name, Ticket, Cabin, PassengerId))
+ndf$Sex <- as.numeric(as.factor(ndf$Sex))
+ndf$Embarked <- as.numeric(as.factor(ndf$Embarked))
+ndf$Survived <- as.factor(ndf$Survived)
+```
+
+
+```{r}
+task <-  makeClassifTask(id = "titanic", data = ndf, target = "Survived",
+                                 positive = '1')
+```
+
+```{r}
+ctrl = makeFeatSelControlExhaustive()
+rdesc = makeResampleDesc("CV", iters = 10)
+# sfeats = selectFeatures(learner = "classif.xgboost", task = task, resampling = rdesc, control = ctrl,
+                        # show.info = TRUE, measures = list('acc'=acc))
+```
+
+```{r}
+# imp_features <- sfeats$x
+imp_features <- c('Sex', 'Age', 'Parch', 'Fare', 'Survived')
+nndf <- ndf %>% select(imp_features, SibSp)
+task <-  makeClassifTask(id = "titanic", data = nndf, target = "Survived",
+                                 positive = '1')
+
+learner <- makeLearner("classif.xgboost", predict.type = 'prob')
+model <- train(learner, task)
+ndata <- data.frame(Sex = 2,Age=2,Parch=1,Fare=10,SibSp=3)
+predict(model, newdata =  ndata)
+```
+
+Szansa na przeżycie wynosi 39.65\%.
+
