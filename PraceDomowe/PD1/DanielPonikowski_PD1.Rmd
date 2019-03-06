@@ -1,0 +1,83 @@
+---
+title: "DanielPonikowski_PD1"
+author: "Daniel Ponikowski"
+date: "5 marca 2019"
+output: pdf_document
+---
+
+```{R message=FALSE, warning=FALSE}
+options(stringsAsFactors = FALSE)
+library(readstata13)
+library(dplyr)
+library(caret)
+library(ggplot2)
+data <- read.dta13(file = "HCMST 2017 fresh sample for public sharing draft v1.1.dta")
+```
+## Wybrane zmienne 
+    + ppwork - aktualny status zatrudnienia
+    + w6_q20 - Czy obecnie mieszkasz z partnerem?
+    + Q21A_Year - w którym roku pierwszy raz spotka³eœ partnera?
+    + ppage - wiek
+  
+```{R message=FALSE, warning=FALSE}
+df <- data[,c("S1","ppwork","w6_q19","Q21A_Year","ppage")]
+
+
+df <- df %>% mutate(Q21A_Year = as.numeric(as.character(Q21A_Year))
+                    ,ppwork = factor(ppwork)
+                    ,w6_q19 = factor(w6_q19)
+                    ,ppage = as.numeric(ppage)
+                    ,S1= factor(S1)) %>%
+  na.omit() %>% unique() %>% as.data.frame()
+
+control <- trainControl(method = "cv", number=10, search = "random")
+metric <- "Accuracy"
+RF <- train(df[2:5],df$S1 ,method = "rf", metric = metric,
+                  trControl = control)
+
+```
+
+## Rêczne narysowanie wykresu ceteris paribus dla losowej osoby.
+
+### Zmienna Q21A_Year
+
+Najpierw wylosuje osobe dla której bêdziemy rysowaæ wykresy.
+```{r}
+(os <- df[sample(1:nrow(df),size = 1),])
+```
+
+```{R}
+year <- min(as.numeric(df$Q21A_Year)):max(as.numeric(df$Q21A_Year))
+df_Q21A_Year <- data.frame(ppwork = rep(os$ppwork,length(year))
+                           ,w6_q19 = rep(os$w6_q19,length(year))
+                           ,Q21A_Year = year
+                           ,ppage = rep(os$ppage,length(year)) )
+
+df_Q21A_Year$prob_married <- predict(RF,df_Q21A_Year,type = "prob")[,1]
+
+
+ggplot(df_Q21A_Year,aes(x = Q21A_Year,y = prob_married)) + geom_line() +
+  ggtitle("Ceteris Paribus zmiennej Q21A_Year")
+```
+
+## Zmienna ppage
+```{r}
+age <- min(df$ppage):max(df$ppage)
+df_ppage <- data.frame(ppwork = rep(os$ppwork,length(age))
+                       ,w6_q19 = rep(os$w6_q19,length(age))
+                       ,Q21A_Year = rep(os$Q21A_Year,length(age))
+                       ,ppage = age )
+
+df_ppage$prob_married <- predict(RF,df_ppage,type = "prob")[,1]
+
+ggplot(df_ppage,aes(x = ppage,y = prob_married)) + geom_line() + 
+  ggtitle("Ceteris Paribus zmiennej ppage")
+
+```
+
+
+
+
+
+
+
