@@ -1,0 +1,188 @@
+---
+title: "Homework 1"
+author: "Piotr Pasza Storozenko"
+date: "1 03 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Ceteris Paribus
+
+## Read data
+```{r message=FALSE, warning=FALSE}
+library(haven)
+library(mlr)
+library(tidyverse)
+```
+
+```{r}
+# Download data from https://stacks.stanford.edu/file/druid:hg921sg6829/HCMST_2017_public_data_v1.1_stata.zip and extract to the same folder as raport.
+data <- read_stata('HCMST 2017 fresh sample for public sharing draft v1.1.dta')
+```
+
+## Choosed features
+
+* `ppethm` - Race /Etnicity
+* `age_when_met` - Self explaining
+* `Q27` - Did you and your partner grow up in the same city or town?
+* `w6_sex_frequency` - Frequency of heaving sex with partner during last 12 months.
+
+```{r}
+raw_df <- data %>% 
+    select(c(ppethm, age_when_met, Q27, w6_sex_frequency, ppage, S1)) %>% 
+    na.omit() 
+labels <- sapply(1:ncol(raw_df), function(i) attributes(raw_df[[i]])$label)
+legends <- sapply(1:ncol(raw_df), function(i) {
+    labs <- attributes(raw_df[[i]])$labels
+    labs[labs >0]
+})
+choosed_df <- raw_df %>% 
+    mutate(ppethm = as.factor(ppethm)) %>% 
+    filter(Q27 != -1) %>% 
+    mutate(Q27 = as.factor(Q27)) %>% 
+    filter(ppage > 0) %>% 
+    mutate(ppage = as.numeric(ppage)) %>% 
+    mutate(S1 = as.factor(S1)) %>% 
+    filter(w6_sex_frequency != -1) %>% 
+    mutate(w6_sex_frequency = as.numeric(w6_sex_frequency))
+```
+
+```{r warning=FALSE}
+task <- makeClassifTask('hc',choosed_df, 'S1')
+lrnr <- makeLearner('classif.randomForest', predict.type = 'prob')
+model <- train(lrnr, task)
+# rdesc = makeResampleDesc("Subsample", iters = 10, split = 3/4)
+# benchmark(lrnr, task, rdesc, measures = list(f1))
+```
+
+```{r}
+repr_inds <- sample(nrow(choosed_df), 100)
+
+uni_vals <- lapply(1:(ncol(choosed_df)-1), function(c) {
+    tmp <- unique(choosed_df[,c])
+    tmp[order(tmp[[1]]),]
+})
+
+r1 <- sapply(repr_inds, function(ind){
+    obs <- choosed_df[ind,]
+    lapply(1:length(uni_vals), function(f){
+        predict(model, newdata = cbind(uni_vals[[f]], obs[-f]))$data[,2]
+    })
+})
+```
+
+```{r}
+r2 <- sapply(1:nrow(r1), function(i){
+    do.call(cbind, r1[i,]) %>% as.data.frame() %>% gather(key = 'Person') %>% cbind(feature = uni_vals[[i]])
+})
+```
+
+```{r}
+plots <- lapply(1:ncol(r2), function(k){
+    rdf <- r2[,k] %>% as.data.frame()
+    colnames(rdf) <- c('Person', 'value', 'feature')
+    if (k == 4) {
+      rdf <- rdf %>% mutate(feature = as.factor(feature))
+    }
+    p <- rdf %>% 
+        ggplot(aes(x = feature, y= value, group = Person)) +
+        geom_line(color='grey') +
+        xlab(labels[k]) +
+        ylab('Probability of being merried') +
+        scale_x_discrete(labels = as.character(names(legends[[k]])))
+    
+    mean_valdf <- rdf %>% 
+        group_by(feature) %>% 
+        summarise(mean = mean(value)) %>% 
+        cbind(Person=101)
+    p + geom_line(data = mean_valdf, aes(feature, mean))  +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+})
+```
+
+## Plots
+
+```{r echo=FALSE}
+plots[[1]]
+```
+
+```{r echo=FALSE, message=FALSE}
+plots[[2]] + scale_x_continuous() + xlab("Age when met?")
+```
+
+```{r echo=FALSE}
+plots[[3]]
+```
+
+```{r echo=FALSE}
+plots[[4]]
+```
+
+
+```{r echo=FALSE, message=FALSE}
+plots[[5]] + scale_x_continuous() 
+```
+
+## Bonus - histograms
+```{r echo=FALSE}
+choosed_df %>% ggplot(aes(x=ppethm)) +
+  geom_bar() + 
+  xlab(labels[1]) + 
+  scale_x_discrete(labels = names(legends[[1]])) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+choosed_df %>% ggplot(aes(x=age_when_met)) +
+  geom_histogram()+ 
+  xlab("Age when met?") + 
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r echo=FALSE}
+choosed_df %>% ggplot(aes(x=Q27)) +
+  geom_bar()+ 
+  xlab(labels[3]) + 
+  scale_x_discrete(labels = names(legends[[3]])) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r echo=FALSE}
+choosed_df %>% 
+  mutate(w6_sex_frequency = as.factor(w6_sex_frequency)) %>% 
+  ggplot(aes(x=w6_sex_frequency)) +
+  geom_bar()+ 
+  xlab(labels[4]) + 
+  scale_x_discrete(labels = names(legends[[4]])) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+choosed_df %>% ggplot(aes(x=ppage)) +
+  geom_histogram()+ 
+  xlab(labels[5]) + 
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+summary(choosed_df$ppage)
+```
+
+
+## Funny fact
+
+Model shows that heaving sex less frequently is related to being married.
+It's not model speccific fact, SVMs and logistic regression shows the same.
+I'm not an expert but I think this can be related to the fact that 1/4 of asked people are older then 61.

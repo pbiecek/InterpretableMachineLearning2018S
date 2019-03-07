@@ -1,7 +1,6 @@
 # Interpretable Machine Learning 2018S
 
-Lecture notes for 'Interpretable Machine Learning' at WUW and UW. Summer semester 2018/2019
-
+Wyjaśnialne uczenie maszynowe. Semestr letni 2018/2019.
 
 # Wprowadzenie
 
@@ -16,18 +15,18 @@ Uważam, że jedną z najważniejszych umiejętności data-scientista jest elast
 
 Plan spotkań na semestr letni
 
-* 2019-03-01
-* 2019-03-08  Wspólne spotkania projektowe - wprowadzenie (wielka piątka)
-* 2019-03-15
-* 2019-03-22
-* 2019-03-29  Wspólne spotkania projektowe - oddanie I (wielka piątka)
-* 2019-04-05
-* 2019-04-12
-* 2019-04-26  Wspólne spotkania projektowe - oddanie II (wielka piątka)
-* 2019-05-17
-* 2019-05-24
-* 2019-05-31  Wspólne spotkania projektowe - prezentacje (wielka piątka)
-* 2019-06-07
+* 2019-03-01  Wprowadzenie do XAI. Omówienie Ceteris Paribus i Partial Dependence Plots
+* 2019-03-08  **Wspólne spotkania projektowe** - wprowadzenie (wielka piątka)
+* 2019-03-15  Wankardu Plots, Accumulated Local Effects 
+* 2019-03-22  SHAP i Break Down (z interakcjami)
+* 2019-03-29  **Wspólne spotkania projektowe** - oddanie I (wielka piątka)
+* 2019-04-05  LIME i localModel
+* 2019-04-12  Auditor, model agnostic variable importance
+* 2019-04-26  **Wspólne spotkania projektowe** - oddanie II (wielka piątka)
+* 2019-05-17  Anchors i SAFE
+* 2019-05-24  Concept drift, variable drift i interactive explanations
+* 2019-05-31  **Wspólne spotkania projektowe** - prezentacje (wielka piątka)
+* 2019-06-07  Saliency maps, XAI dla obrazów i tekstu
 
 # Zasady zaliczenia
 
