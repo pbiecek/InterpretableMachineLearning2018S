@@ -11,7 +11,7 @@ Dane są zapisane w formacie Staty (dta). Do R można je wczytać np. pakietem `
 
 1. Odtwórz model przewidujący czy dana osoba jest zamężna na podstawie wybranych zmiennych. Można wybrać dowolne zmienne objaśniające przy czym powinny być przynajmniej 2 ilościowe (lub przynajmniej uporządkowane) i 2 jakościowe. W kolumnie `S1` jest informacja czy dana osoba jest zamężna. Można zbudować dowolny model, sugeruję xgboost lub las losowy.
 
-2. Dla wybraneych zmiennych porównaj profile Ceteris Paribus z przynajmniej jednym innym rodzajem liczenia odpowiedzi modelu (Accumulated Local Effects lub Marginal Effects lub Local Conditional Expectations).
+2. Dla wybranych zmiennych (najlepiej tych które były użyte w PD1) porównaj profile Ceteris Paribus z przynajmniej jednym innym rodzajem liczenia odpowiedzi modelu (Accumulated Local Effects lub Marginal Effects lub Local Conditional Expectations).
 
 3. Czy profile CP różni się od profilu biorącego pod uwagę korelacje? Spróbuj wyjaśnić uzyskane wyniki.
 
