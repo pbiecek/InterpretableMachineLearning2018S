@@ -15,9 +15,9 @@ Uważam, że jedną z najważniejszych umiejętności data-scientista jest elast
 
 Plan spotkań na semestr letni
 
-* 2019-03-01  Wprowadzenie do XAI. Omówienie Ceteris Paribus i Partial Dependence Plots
+* 2019-03-01  Wprowadzenie do XAI. Omówienie Ceteris Paribus [CP_pmvee](https://pbiecek.github.io/PM_VEE/ceterisParibus.html) i Partial Dependence Plots [PD_pmvee](https://pbiecek.github.io/PM_VEE/variableEngeneering.html#partialDependence), [PD_iml](https://christophm.github.io/interpretable-ml-book/pdp.html)
 * 2019-03-08  **Wspólne spotkania projektowe** - wprowadzenie (wielka piątka)
-* 2019-03-15  Wankardu Plots, Accumulated Local Effects 
+* 2019-03-15  Wankardu Plots, Accumulated Local Effects [AL_iml](https://christophm.github.io/interpretable-ml-book/ale.html), [ALE_pap](https://cran.r-project.org/web/packages/ALEPlot/vignettes/AccumulatedLocalEffectPlot.pdf)
 * 2019-03-22  SHAP i Break Down (z interakcjami)
 * 2019-03-29  **Wspólne spotkania projektowe** - oddanie I (wielka piątka)
 * 2019-04-05  LIME i localModel
