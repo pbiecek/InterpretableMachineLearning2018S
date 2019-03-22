@@ -1,0 +1,121 @@
+---
+title: "Praca domowa 1"
+author: Mateusz Dolinski
+date: 05.03.2019
+output:
+  html_notebook:
+    theme: united
+    toc: yes
+    toc_float: yes
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+library(pacman)
+p_load(randomForest, 
+       tidyverse,
+       haven,
+       utils,
+       DALEX,
+       ceterisParibus,
+       install=FALSE)
+```
+
+# Wczytanie danych
+
+Na poczatek sciagamy zip z danymi do tymczasowego pliku:
+
+```{r download zip, echo=TRUE, results = 'hide'}
+url <- 'https://stacks.stanford.edu/file/druid:hg921sg6829/HCMST_2017_public_data_v1.1_stata.zip'
+temp <- tempfile()
+download.file(url,
+              temp)
+```
+
+Nastepnie wczytujemy dane przy pomocy pakietu **haven**:
+
+```{r load data}
+DATA <- read_stata(unzip(temp))
+rm(temp)
+```
+
+# Eksploracja
+
+Wyciągnijmy zmienną celu oraz wybrane zmienne objaśniające. Są to:
+
+* Q9: How old is [Partner name]?
+* Q19: Are you currently living with [Partner name]? (1 - yes, 2 - no)
+* Q26: Did you and [Partner name] attend he same college or university? (1 - yes, 2 - no)
+* ppage: Age
+
+Zmienna celu jest:
+
+* S1: Are you married? (1 - yes, 2 - no)
+
+Usuniete zostana rekordy z brakami danych lub odmowa odpowiedzi na ktores z uwzglednionych pytan. Po czyszczeniu pozostalo 1595 obserwacji.
+
+```{r column choice}
+columns <- c('S1', 'Q9', 'Q19', 'Q26', 'ppage')
+DATA.TRAIN <- DATA %>%
+              select(columns) %>%
+              filter(Q26 > 0) %>%
+              filter(complete.cases(.)) %>%
+              mutate(S1    = as.factor(S1 - 1),
+                     Q19   = as.factor(Q19 - 1),
+                     Q26   = as.factor(Q26 - 1),
+                     Q9    = as.numeric(Q9),
+                     ppage = as.numeric(ppage))
+```
+
+# Trening i wizualizacja 
+
+Trenujmy las losowy:
+
+```{r model train}
+set.seed(1)
+rf_model <- randomForest(S1 ~ .,
+                         data = DATA.TRAIN, 
+                         ntree=20, 
+                         maxmodes=5)
+y_pred <- predict(rf_model, DATA.TRAIN[, -1])
+conf.matrix <- table(DATA.TRAIN$S1, y_pred)
+acc <- sum(diag(conf.matrix)) / sum(conf.matrix)
+print(sprintf('Accuracy equals to %2.4f', acc))
+```
+Rysujemy wykresy ceteris paribus dla respondenta w wieku 41 lat z 40-letnim partnerem z ktorym obecnie mieszka oraz uczeszczal do tej samej uczelni wyzszej.
+Na poczatek zobaczymy wyniki dla zmiennych ciaglych:
+
+```{r cp, fig.align="center", warning=FALSE}
+explainer_rf <- explain(rf_model,
+                        data = DATA.TRAIN,
+                        y = DATA.TRAIN$S1)
+
+new_person <- data.frame(Q9 = 40., 
+                         Q19 = factor(1, levels = c(0,1)), 
+                         Q26 = factor(0, levels = c(0, 1)), 
+                         ppage = 41.)
+
+cp_rf <- ceteris_paribus(explainer_rf, 
+                         new_person, 
+                         variables = c("Q9", "ppage"))
+
+plot(cp_rf, 
+     alhpa = 0, 
+     color='black')
+```
+
+oraz wykresy dla obu zmiennych jednoczesnie:
+
+```{r cp bothR, fig.align="center", warning=FALSE}
+wi_rf_2d <- what_if_2d(explainer_rf, 
+                       observation = new_person, 
+                       selected_variables =  c('Q9', 'ppage'))
+plot(wi_rf_2d, 
+     split_ncol = 2)
+```
+
+# Wnioski 
+Ciekawa obserwacja jest fakt, że wiek partnera systematycznie zwieksza prawdopodobienstwo bycia niezameznym, ale tylko do osiagniecia wieku sredniego (50 lat). Nastepnie efekt 'wyplaszcza sie' i ma stala kontrybucje do sklonnosci bycia niezameznym. Wiek osoby pytanej cechuje sie fluktuacjami, ktore moga swiadczyc o nieliniowej zaleznosci lub zlym lokalnym dopasowaniu zmiennej.
+
+Kolejna ciekawostka jest 'dziura' w przypadku partnerow w wieku 50-60 lat oraz 'wysepka' dla partnerow powyzej 75 lat. Model sugeruje, ze w pierwszym przypadku osoby te sa zamezne a w drugim nie. Moze to wynikac z demografii lub obciazenia proby.
