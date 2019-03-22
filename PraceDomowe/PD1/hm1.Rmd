@@ -1,0 +1,55 @@
+---
+title: "hm1"
+author: "Robert Benke"
+date: "2 marca 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+##Zadanie 1
+Wybrane zmienne:
+* time_from_rel_to_cohab - czas pomiedzy poznaniem a rozpoczęciem relacji
+* hcm2017q24_college - poznali sie na uniwersytecie  
+* hcm2017q24_bar_restaurant - poznali się w barze/restauracji/itp.
+* partner_yrsed - liczba lat jaką pertner spędził na edukcji
+```{r,warning=FALSE}
+library(haven)
+library(tidyverse)
+data <- haven::read_dta('HCMST 2017 fresh sample for public sharing draft v1.1.dta')
+data$S1 = as.factor(data$S1)
+data <- data %>% as.data.frame()
+data = data %>% select(c("time_from_rel_to_cohab","hcm2017q24_college",
+                         "hcm2017q24_bar_restaurant", "partner_yrsed", "S1"))
+summary(data)
+data <-  drop_na(data)
+```
+
+##Zadanie 2 - random forest
+```{r,warning=FALSE}
+library(mlr)
+task <- makeClassifTask(data = data, target = "S1")
+learnList <- listLearners("classif")
+lrn <- makeLearner("classif.ranger",predict.type = "prob")
+model <- train(lrn,task)
+summary(model)
+```
+
+##Zadanie 3
+```{r,warning=FALSE}
+CP <- function(model,lrn,object,variable,min=0,max=40){
+  itv <- seq(min,max,length.out = 1000)
+  df <- object[rep(1, 1000),]
+  df[,variable] = itv
+  df["predict"] = predictLearner(lrn,model,df)[,1]
+  plot(object[,variable],predictLearner(lrn,model,object)[,1],col="red")
+  lines(df[,variable],df$predict, type = "l",col="blue")
+}
+  
+Rand.person <- data[123,]
+  CP(model,lrn,Rand.person,"time_from_rel_to_cohab")
+  CP(model,lrn,Rand.person,"partner_yrsed")
+
+```
+
