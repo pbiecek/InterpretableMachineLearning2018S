@@ -1,0 +1,106 @@
+---
+title: "Interpretable Machine Learning PD 3"
+author: "Daniel Ponikowski"
+date: "23 marca 2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+#options(stringsAsFactors = FALSE)
+library(readstata13)
+library(dplyr)
+library(caret)
+library(gtools)
+```
+## Wybrane zmienne :
+
+    1. ppwork - aktualny status zatrudnienia
+    2. w6_q20 - czy obecnie mieszkasz z partnerem?
+    3. Q21A_Year - w ktorym roku pierwszy raz spotka³es partnera?
+    4. ppage - wiek
+    
+## Odtworzenie modelu
+
+```{r,warning=FALSE}
+data <- read.dta13(file = "../PD1/HCMST 2017 fresh sample for public sharing draft v1.1.dta")
+df <- data[,c("S1","ppwork","w6_q19","Q21A_Year","ppage")]
+
+df <- df %>% mutate(Q21A_Year = as.numeric(as.character(Q21A_Year))
+                    ,ppwork = factor(ppwork)
+                    ,w6_q19 = factor(w6_q19)
+                    ,ppage = as.numeric(ppage)
+                    ,S1= factor(S1)) %>%
+  na.omit() %>% unique() %>% as.data.frame()
+row.names(df) <- 1:nrow(df)
+RF <- readRDS("randomForestPD1.rds")
+```
+
+## Wybrana osoba
+```{r}
+(osoba <- df[1101,])
+predict(RF,osoba,"prob")
+```
+
+## Rysowanie wykresow: 
+
+```{r}
+break_down <- function(zmienne,df,ind_osoba,model){
+  wynik <- data.frame(matrix(nrow = 1,ncol = 0))
+  osoba <- df[ind_osoba,]
+  #srednia odpowiedz modelu
+  odp_modelu <- predict(object = model,df,type = "prob")[,1] %>% mean() %>% round(3)
+  wynik$odp_modelu <- odp_modelu
+  #obliczanie srednich odpowdzi modelu przy zamienianiu kolejnych zmiennych 
+  for (i in 1:length(zmienne) ){
+  df[[zmienne[i] ]] <- osoba[[zmienne[i]]]
+  wynik[[zmienne[i]]] <- predict(object = model,newdata = df,type = "prob")[,1] %>%
+    mean() 
+  }
+  colnames(wynik) <- c("srednia odpowiedz modelu",zmienne)
+  wynik <- wynik %>% unlist() %>% c()  
+  {  #rysowanie wykresu
+  par(oma = c(1.1,8.2,0,0)) #ustawiam takie wartosci, zeby wartosci
+  par(mar = c(5.1,4.2,0.1,0.1)) # zmiennych sie zmiesily na wykresie
+  plot(x = wynik, y = 1:length(wynik),pch = 16, col = "grey", cex = 3,las = 1
+       ,frame.plot = TRUE,axes = FALSE,xlab  = "prob married"
+      ,ylab = "",ylim = c(0.5,length(wynik)+0.5),xlim = c(0,1))
+  axis(side = 1,at = seq(0,1,length.out = 6))
+  axis(side = 2,at = 1:length(wynik),labels = c("srednia odpowiedz modelu",paste0(
+    zmienne,"=",lapply(osoba,FUN = as.character) %>% unlist %>% "["(zmienne))),
+    las = 1)
+  text(wynik[1],x = wynik[1],y = 1,pos = 3,col = "blue")
+  text(wynik[length(wynik)],y = length(wynik),x = wynik[length(wynik)],pos = 3,col = "blue")
+  for (i in 1:(length(wynik)-1)){
+  roznica <- round(wynik[i+1]-wynik[i],3) %>% as.character()
+  col <- ifelse(as.numeric(roznica) > 0,"green","red")
+  arrows(y0 = i+1,y1 = i+1,x0 = wynik[i],x1 = wynik[i+1],lwd = 2,col = col)
+  text(roznica ,x = (wynik[i+1] + wynik[i])/2 ,y = i + 1,pos = 1,col = col)
+  }
+    } 
+}
+num <-  as.numeric(row.names(osoba))
+zmienne <- c("w6_q19","ppwork","ppage","Q21A_Year")
+break_down(zmienne,df,num,RF) 
+zmienne2 <- c("Q21A_Year","ppage","w6_q19","ppwork")
+break_down(zmienne2,df,num,RF) 
+```
+
+## Wnioski
+Dla pierwszej kolejnosci zmiennych czyli *w6_q19*, *ppwork*, *ppage*, *Q21A_Year* obserwujemy dwie duze zmiany:
+  
+  1. zmienna *w6_q19* - duzy spadek sredniej odpowiedzi 
+  2. *Q21A_Year* - du¿y wzrost sredniej odpowiedzi modelu (odpowiedz modelu dla wybranej obserwacji).
+  
+Dla  drugiej kolejnosci zmiennych *Q21A_Year*, *ppage*, *w6_q19*, *ppwork* odserwujemy jedna wieksza zmiane w sredniej odpowiedzi modelu (zmienna *w6_q19*), pozosta³e zmiany sa mniejsze. Ciekawa obserwacja jest to, ze dla zmienncyh *ppage* i *ppwork* srednia odpowiedz modelu raz spada a raz rosnie.
+
+### Wnioski ogolne: 
+
+  1. Dla wybranej obserwacji wartosc zmiennej *Q21A_Year* (rok poznania obecnego partnera), wp³ywa pozytywnie na odpowiedz modelu (zwieksza       prawdopodobienstwo malzenstwa). Jest to zgodne z intuicja, zazwyczaj w zwiazku malzenskim sa osoby, ktore znaja sie wiele lat.
+  2. Dla wybranej obesrwacji wartosc zmiennej *w6_q19* (czy mieszkasz z obecnym partnerem?), wplywa negatywnie na odpowiedz modelu (zmniejsza prawdopodobienstwo malzenstwa). Rowniez jest to zgodne z intuicja, poniewaz malzenstwa zazwyczaj mieszkaja razem.
+
+
+
+
+
