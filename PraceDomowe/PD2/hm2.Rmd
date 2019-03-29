@@ -1,0 +1,125 @@
+---
+title: "hm2"
+author: "Robert Benke"
+date: "2 marca 2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+### Homework I 
+
+
+##Zadanie 1
+Wybrane zmienne:
+
+ * time_from_rel_to_cohab - czas pomiedzy poznaniem a rozpoczęciem relacji
+ * hcm2017q24_college - poznali sie na uniwersytecie  
+ * hcm2017q24_bar_restaurant - poznali się w barze/restauracji/itp.
+ * partner_yrsed - liczba lat jaką pertner spędził na edukcji
+```{r,warning=FALSE, include=FALSE,echo=FALSE}
+library(haven)
+library(tidyverse)
+library(ggplot2)
+```
+```{r,warning=FALSE, include=FALSE,echo=FALSE}
+data <- haven::read_dta('HCMST 2017 fresh sample for public sharing draft v1.1.dta')
+data$S1 = as.factor(data$S1)
+data <- data %>% as.data.frame()
+data = data %>% select(c("time_from_rel_to_cohab","hcm2017q24_college",
+                         "hcm2017q24_bar_restaurant", "partner_yrsed", "S1"))
+summary(data)
+data <-  drop_na(data)
+```
+
+##Zadanie 2 - random forest
+```{r,warning=FALSE, include=FALSE,echo=FALSE}
+library(mlr)
+task <- makeClassifTask(data = data, target = "S1")
+learnList <- listLearners("classif")
+lrn <- makeLearner("classif.ranger",predict.type = "prob")
+model <- train(lrn,task)
+summary(model)
+```
+
+##Zadanie 3
+```{r,warning=FALSE}
+CP <- function(model,lrn,object,variable,min=0,max=40){
+  itv <- seq(min,max,length.out = 100)
+  df <- object[rep(1, 100),]
+  df[variable] = itv
+  df["predict"] = predictLearner(lrn,model,df)[,1]
+  object["predict"] = predictLearner(lrn,model,object)[,1]
+  p1 <- ggplot() + 
+    geom_line(data = df,aes(!!sym(variable),predict, colour = variable)) +
+    geom_point(data = object,aes(!!sym(variable),predict, colour = "observed")) 
+  p1
+}
+  
+Rand.person <- data[123,]
+  CP(model,lrn,Rand.person,"time_from_rel_to_cohab",min=min(data$time_from_rel_to_cohab),
+     max = max(data$time_from_rel_to_cohab))
+  CP(model,lrn,Rand.person,"partner_yrsed",min=min(data$partner_yrsed),
+     max = max(data$partner_yrsed))
+
+```
+
+### Homework II
+
+```{r}
+ALE <- function(model,lrn,data, variable,n_bins){
+  # Stworzenie wektora group (grupy równoliczne, pozostałe obserwacje
+  # trafiają do ostatniej grupy)
+ groups <- data %>% dim %>% "["(1) %>% 
+   "/"(n_bins) %>% floor() %>% rep(x = 1:n_bins) %>% 
+   sort() %>% c(rep(n_bins,dim(data)[1]/n_bins)) 
+ # Sortowanie zbioru po zmiennej i przydzielenie grup
+ data <- data %>% dplyr::arrange(!!sym(variable)) %>% 
+   mutate(group = groups[1:dim(data)[1]])
+ # wartości graniczne dla przedziałów
+ breaks <- data %>% group_by(group) %>% 
+   summarise(m = min(!!sym(variable))) %>% 
+   "["("m") %>% unlist() 
+  breaks <-c(breaks, max(data[,variable])) %>% as.vector()
+  # środki przedziałów
+  mid_breaks <- cbind(breaks,lead(breaks)) %>% 
+    rowMeans %>% "["(1:n_bins)
+  
+  # dane z podstawionymi lewymi i prawymi końcami przedziałów dla grup
+  dataLOW <- data %>% mutate(!!sym(variable) := breaks[group]) %>% 
+    select(-c(group))
+  dataHIGH <- data %>% mutate(!!sym(variable) := breaks[group+1]) %>% 
+    select(-c(group))
+  #wyliczenie ALE dla przedziałów
+  ALE_results <- data %>% mutate(low := predictLearner(lrn,model,dataLOW)[,1],
+                          high := predictLearner(lrn,model,dataHIGH)[,1]) %>%
+    mutate(change := high - low) %>% group_by(group) %>% 
+    summarise(meanChange = mean(change, na.rm = TRUE)) %>% 
+    select(meanChange)  %>% cbind(mid_breaks) %>% 
+    mutate(cum_meanChange := cumsum(meanChange),mean_cum = mean(cum_meanChange)) %>% 
+    mutate(cum_meanChange := cum_meanChange - mean_cum)
+  # rysowanie wyników
+  ggplot(ALE_results,aes(mid_breaks,meanChange))+geom_point(aes(colour = "mid points"))+geom_line()
+}
+ALE(model,lrn, data, "time_from_rel_to_cohab",40)
+ALE(model,lrn, data, "partner_yrsed",40)
+```
+
+
+# Wnioski
+
+* brak wpływu czasu od rozpoczęcia znajomości do rozpoczęcia relacji
+na zmienną objaśnianą dla wartości do 7 lat, natomiast 
+dalsza część wykresu sugeruje znaczne zmniejszenie się prawdopodobieństwa.
+* powyższy wniosek zgadza się z wcześniej otrzymanym wykresem ICE
+* również drugi wykres (ilość lat spędzonych na edukacji przez partnera)
+jest zbliżony do ICE, widzmy wyrażnie, że szanse na małżeństwo rosną wraz 
+z predyktorem osiągając maksimum około 11, potem nieznacznie opadają, żeby
+ w dalszej części utrzymać się na stałym poziomie.
+* w celu poprawienia czytelności należałoby usunąc obserwacje z bazy danych 
+o wartościach najmniejszych i największych (np 1% z obu stron). Nie tracimy
+przy tym wiele ponieważ obserwacje te są rzadkie i wnioskowanie w oparciu o 
+nie jest dość ryzykowne.
