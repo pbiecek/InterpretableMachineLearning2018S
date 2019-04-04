@@ -1,0 +1,134 @@
+---
+title: "Homework 3"
+author: "Piotr Pasza Storozenko"
+date: "29 03 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read data
+```{r message=FALSE, warning=FALSE}
+library(haven)
+library(mlr)
+library(tidyverse)
+```
+
+```{r}
+# Download data from https://stacks.stanford.edu/file/druid:hg921sg6829/HCMST_2017_public_data_v1.1_stata.zip and extract to the same folder as raport.
+data <- read_stata('HCMST 2017 fresh sample for public sharing draft v1.1.dta')
+```
+
+## Choosed features
+
+* `ppethm` - Race /Etnicity
+* `age_when_met` - Self explaining
+* `Q27` - Did you and your partner grow up in the same city or town?
+* `w6_sex_frequency` - Frequency of heaving sex with partner during last 12 months.
+
+```{r}
+raw_df <- data %>% 
+    select(c(ppethm, age_when_met, Q27, w6_sex_frequency, ppage, S1)) %>% 
+    na.omit() 
+labels <- sapply(1:ncol(raw_df), function(i) attributes(raw_df[[i]])$label)
+legends <- sapply(1:ncol(raw_df), function(i) {
+    labs <- attributes(raw_df[[i]])$labels
+    labs[labs >0]
+})
+choosed_df <- raw_df %>% 
+    mutate(ppethm = as.factor(ppethm)) %>% 
+    filter(Q27 != -1) %>% 
+    mutate(Q27 = as.factor(Q27)) %>% 
+    filter(ppage > 0) %>% 
+    mutate(ppage = as.numeric(ppage)) %>% 
+    mutate(S1 = as.factor(S1)) %>% 
+    filter(w6_sex_frequency != -1) %>% 
+    mutate(w6_sex_frequency = as.numeric(w6_sex_frequency))
+```
+
+```{r warning=FALSE}
+task <- makeClassifTask('hc',choosed_df, 'S1')
+lrnr <- makeLearner('classif.randomForest', predict.type = 'prob')
+model <- train(lrnr, task)
+```
+
+## Breakdown
+
+The described person is White, Non-Hispanic, met with a partner at 37.
+They grew up in different cities.
+They do have sex once or twice a week.
+Now this person is 52 and is married.
+
+```{r fig.height=9, warning=FALSE}
+obs <- choosed_df[1337,]
+res <- predict(model, newdata = choosed_df)$data$prob.1 %>% mean()
+
+df <- choosed_df
+n <- nrow(df)
+for (i in 1:5) {
+  df[[i]] <- rep(obs[[i]], length.out = n)
+  res[i+1] <- predict(model, newdata =  df)$data$prob.1 %>% mean()
+}
+difs <- diff(res)
+labels[[2]] <- "Age when met?"
+labels[[6]] <- NULL
+labs <- unlist(labels)
+labs <- c("Intercept", labs)
+dta <- data.frame(Feature=as.character(labs), prob=res)
+
+dta$end <- cumsum(c(0,difs)) + res[1]
+dta$start <- c(0, head(dta$end, -1))
+dta$id <- 1:6
+dta$ud <- c(0,1,-1,0,0,1) %>% as.factor()
+dta %>% ggplot(aes(rob, fill = ud)) + 
+  geom_rect(aes(x=Feature, xmin = id - 0.45, xmax = id + 0.45, ymin = end, ymax = start)) +
+  scale_x_discrete(labels = dta$Feature) +
+  xlab("Feature") +
+  ylab('Probability of being merried') +
+  scale_fill_discrete("Trend", labels = c("Lose","None","Gain")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r, fig.height=9, warning=FALSE}
+obs <- choosed_df[1337,]
+res <- predict(model, newdata = choosed_df)$data$prob.1 %>% mean()
+
+df <- choosed_df
+n <- nrow(df)
+seqq <- c(5,3,1,2,4)
+for (i in seqq) {
+  df[[i]] <- rep(obs[[i]], length.out = n)
+  res[i+1] <- predict(model, newdata =  df)$data$prob.1 %>% mean()
+}
+difs <- diff(res)
+labels[[2]] <- "Age when met?"
+labels[[6]] <- NULL
+labs <- unlist(labels)
+labs <- c("Intercept", labs[seqq])
+dta <- data.frame(Feature=labs, prob=res)
+
+dta$end <- cumsum(c(0,difs)) + res[1]
+dta$start <- c(0, head(dta$end, -1))
+dta$id <- 1:6
+dta$ud <- c(0,1,-1,1,1,-1) %>% as.factor()
+dta %>% ggplot(aes(prob, fill = ud)) + geom_rect(aes(x = Feature,
+     xmin = id - 0.45, xmax = id + 0.45, 
+     ymin = end,
+     ymax = start))+
+  xlab("Feature") +
+  scale_x_discrete(labels = dta$Feature) +
+  ylab('Probability of being merried') +
+  scale_fill_discrete("Trend", labels = c("Lose","None","Gain")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Small summary
+
+Effects from both orders differs a bit.
+Only Age remains as the main factor, that boosts the probability of being married.
