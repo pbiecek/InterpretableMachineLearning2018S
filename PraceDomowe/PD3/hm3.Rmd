@@ -1,0 +1,101 @@
+---
+title: "hm3"
+author: "Robert Benke"
+date: "22 marca 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+### Homework III
+
+
+##Zadanie 1.1
+Wybrane zmienne:
+
+ * time_from_rel_to_cohab - czas pomiedzy poznaniem a rozpoczęciem relacji
+ * hcm2017q24_college - poznali sie na uniwersytecie  
+ * hcm2017q24_bar_restaurant - poznali się w barze/restauracji/itp.
+ * partner_yrsed - liczba lat jaką pertner spędził na edukcji
+```{r,warning=FALSE, include=FALSE,echo=FALSE}
+library(haven)
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+```
+```{r,warning=FALSE, include=FALSE,echo=FALSE}
+data <- haven::read_dta('HCMST 2017 fresh sample for public sharing draft v1.1.dta')
+data$S1 = as.factor(data$S1)
+data <- data %>% as.data.frame()
+data = data %>% select(c("time_from_rel_to_cohab","hcm2017q24_college",
+                         "hcm2017q24_bar_restaurant", "partner_yrsed", "S1"))
+summary(data)
+data <-  drop_na(data)
+```
+
+##Zadanie 1.2 - random forest
+```{r,warning=FALSE, include=FALSE,echo=FALSE}
+library(mlr)
+task <- makeClassifTask(data = data, target = "S1")
+learnList <- listLearners("classif")
+lrn <- makeLearner("classif.ranger",predict.type = "prob")
+model <- train(lrn,task)
+summary(model)
+```
+
+## Zadanie 2
+```{r}
+
+Conditional <- function(idx, obs_idx =123){
+  dataCopy <- data
+  obs <- data[obs_idx,]
+  
+mean_overall <-   predictLearner(lrn,model,dataCopy)[,1] %>% mean()
+means <- sapply(idx, FUN = function(i) { 
+  dataCopy[,i] <<- obs[,i]
+  predictLearner(lrn,model,dataCopy)[,1] %>% mean()
+  })
+means <- c(0,mean_overall,means)
+
+# preparing data to visualtisation 
+rs <- matrix(c(means,lead(means)),ncol=2)[1:(length(idx)+1),] %>% as.data.frame()
+rs <- rs %>% mutate(V3 := as.factor(sign(V2 - V1)),
+                    No := 1:(length(idx)+1),change := V2 - V1)
+
+names(rs) <- c("beg","end","V3","No","change")
+numbers2words <- c("intercept",names(data)[idx])
+
+# drawing
+Obs.Pred <- rs[nrow(rs),2]
+
+p <- ggplot(data = rs, aes( label1 = beg, label2= end, label3 = change))+
+    geom_rect(data = rs, aes(xmin = No-0.33,xmax=No+0.33,
+                ymin = beg, ymax = end, fill = V3, alpha = 0.7)) +
+ geom_hline(yintercept = Obs.Pred,alpha=0.3,linetype="dotted") +
+  geom_text(aes(0.5, Obs.Pred*1.015, label = format(Obs.Pred, digits = 3), vjust = -1,alpha = 0.3))+
+  scale_x_discrete(xlab(""),limits = numbers2words,labels = function( labels ) { 
+  fixedLabels <- c() 
+  for ( l in 1:length( labels ) ) {
+    fixedLabels <- c( fixedLabels, paste0( ifelse( l %% 2 == 0, '', '\n' ), labels[l] ) ) 
+    } 
+  return( fixedLabels ) 
+  }) + theme(legend.position="none") + ylab("Predicted probability")
+ggplotly(tooltip=c("label1","label2","label3"))
+}
+```
+
+## Zadanie 3 
+
+```{r}
+Conditional(1:4)
+Conditional(4:1)
+Conditional(c(2,1,4,3))
+Conditional(c(3,4,1,2))
+```
+
+# Wnioski
+
+* zmiana kolejności warunkowania nie zmienia wielkości informacji jaką wnoszą do modelu
+poszczególne zmienne. Możemy podejrzewać, że zmienne wpływają na odpowiedź modelu
+w sposób niezależny od siebie.
