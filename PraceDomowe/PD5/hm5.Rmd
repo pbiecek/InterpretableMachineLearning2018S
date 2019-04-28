@@ -68,8 +68,7 @@ perturbationImportance <- function(data = data_dfr, target_ind, model, lrn, titl
   
   results_dfr <- data.frame(names = names(data[,-target_ind]), values = perturb_auc)
   
-   ggplot(results_dfr) + geom_col(aes(x = names, y = values, fill = "x", alpha = 0.7), show.legend = FALSE) + ylab("Decrease of AUC") +  xlab("") + scale_fill_manual(values = c("#0000F0")) + 
-     theme_linedraw() + ggtitle(title)
+
 }
 
 ```
@@ -77,8 +76,17 @@ perturbationImportance <- function(data = data_dfr, target_ind, model, lrn, titl
 ## Zadanie 3 - porównanie modeli
 
 ```{r}
-perturbationImportance(data = data_dfr, target_ind = 5, model = model_logreg, lrn = lrn_logreg, title = "Permutation variable importance for logistic regression")
-perturbationImportance(data = data_dfr, target_ind = 5, model = model_rf, lrn = lrn_rf, title = "Permutation variable importance for Random Forest")
+
+perturbation_logreg_dfr <- perturbationImportance(data = data_dfr, target_ind = 5, model = model_logreg, lrn = lrn_logreg, title = "Permutation variable importance for logistic regression")
+perturbation_rf_dfr <- perturbationImportance(data = data_dfr, target_ind = 5, model = model_rf, lrn = lrn_rf, title = "Permutation variable importance for Random Forest")
+
+perturbation_logreg_dfr <- perturbation_logreg_dfr %>% mutate(model := "logreg")
+perturbation_rf_dfr<- perturbation_rf_dfr %>% mutate(model := "rf")
+plot_dfr = rbind(perturbation_rf_dfr, perturbation_logreg_dfr)
+
+   ggplot(plot_dfr) + geom_col(aes(x = names, y = values,
+                                   fill = factor(model)),
+                               position = "dodge")
 
 ```
 
@@ -102,8 +110,7 @@ explainer_logreg <- explain(model_logreg, data = data_dfr, predict_function = cu
 
 expl_rf <- single_variable(explainer_rf, "time_from_rel_to_cohab", "ale")
 expl_logreg <- single_variable(explainer_logreg, "time_from_rel_to_cohab", "ale")
-plot(expl_rf)
-plot(expl_logreg)
+plot(expl_logreg, expl_rf)
 ```
 
 ALE plot dla random forest pokazuje wyraźnie nieliniową zależność odpowiedzi modelu względem zmiany 'time_from_rel_to_cohab'. Znaczna część danych posiada wartość 'time_from_rel_to_cohab' poniżej 5, gdzie trend jest silnie spadkowy. Ta część miała największy wpływ na współczynnik modelu liniowego jakim jest regresja logistyczna. Drugi wykres przedstawia ALE plot dla regresji logistycznej. Widzimy tutaj liniowy wpływ zmiennej na odpowiedź modelu. Zmienna ta ma niski wskaźnik istotności uzyskany metodą perturbacji, głownie dlatego, że współczynnik dla tej zmiennej powinien byc ujemny dla niskich wartości 'time_from_rel_to_cohab' oraz dodatni gdy zmienna ta przyjmuje wartości powyżej 10. Poprawę modelu logistycznego można uzyskać dodając nieliwą funkcję zmiennej 'time_from_rel_to_cohab', na przykład podnosząc ją do kwadratu.
