@@ -5,7 +5,7 @@ Czas na realizację: do najbliższych zajęć z wykładem 24 maja EOD
 ## Wprowadzenie:
 
 Proces eksploracji modelu jest najczęściej interaktywny. 
-Przetestujmy czy do takiej interaktywnej eksploracji można wykorzystać technki typu chat-bot.
+Przetestujmy czy do takiej interaktywnej eksploracji można wykorzystać techniki typu chat-bot.
 
 ## Zadanie:
 
@@ -15,12 +15,13 @@ Przetestujmy czy do takiej interaktywnej eksploracji można wykorzystać technki
 
 3. Jako pracę domową należy zgłosić plik tekstowy z dwoma sekcjami: 
 
-   - Informacją czego bot nie zrozumiał a powinien (można skipiować przykłady zdań, które zostały źle zinterpretowane).
+   - Informacją czego bot nie zrozumiał a powinien (można skopiować przykłady zdań, które zostały źle zinterpretowane).
 
-   - Informacją jakie nowe intencje bot mógłby rozpoznawać tak by lepiej przybliżyć sposób działania modelu, który przewiduje szansę przeżycia katastrofy na tytaniku.
+   - Informacją jakie nowe intencje bot mógłby rozpoznawać tak by lepiej przybliżyć sposób działania modelu, który przewiduje szansę przeżycia katastrofy na Tytaniku.
  
 4. Do katalogu https://github.com/pbiecek/InterpretableMachineLearning2018S/tree/master/PraceDomowe/PD7 wgraj plik z dwoma powyższymi sekcjami. 
 
 ## Uwagi dodatkowe
 
-W oczywisty sposób nie wyobrażam sobie, że dwie różne osoby mają te dame obserwacje dotyczące interkacji z takim modelem.
+W oczywisty sposób nie wyobrażam sobie, że dwie różne osoby mają te same obserwacje dotyczące interakcji z takim modelem.
+
