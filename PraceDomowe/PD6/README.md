@@ -10,7 +10,7 @@ Dane są zapisane w formacie Staty (dta). Do R można je wczytać np. pakietem `
 ## Zadanie:
 
 1. Odtwórz model przewidujące czy dana osoba jest zamężna na podstawie wybranych zmiennych. Można wybrać dowolne zmienne objaśniające przy czym powinny być przynajmniej 2 ilościowe (lub przynajmniej uporządkowane) i 2 jakościowe. 
-W kolumnie `S1` jest informacja czy dana osoba jest zamężna. Można zbudować dowolne modele, sugeruję modele znacznie różnicące się strukturą.
+W kolumnie `S1` jest informacja czy dana osoba jest zamężna.
 
 2. Wyznacz reszty dla tego modelu na zbiorze danych uczących.
 
