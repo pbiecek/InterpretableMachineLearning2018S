@@ -1,0 +1,109 @@
+---
+title: "hm6"
+author: "Robert Benke"
+date: "11 maja 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Homework IV
+
+
+##Zadanie 1.1
+Wybrane zmienne:
+
+ * time_from_rel_to_cohab - czas pomiedzy poznaniem a rozpoczęciem relacji
+ * hcm2017q24_college - poznali sie na uniwersytecie  
+ * hcm2017q24_bar_restaurant - poznali się w barze/restauracji/itp.
+ * partner_yrsed - liczba lat jaką pertner spędził na edukcji
+
+```{r,warning=FALSE, include=FALSE,echo=FALSE}
+library(haven)
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+library(glmnet)
+```
+```{r,warning=FALSE, include=FALSE,echo=FALSE}
+data <- haven::read_dta('HCMST 2017 fresh sample for public sharing draft v1.1.dta')
+data$S1 = as.factor(data$S1)
+data <- data %>% as.data.frame()
+data = data %>% select(c("time_from_rel_to_cohab","hcm2017q24_college",
+                         "hcm2017q24_bar_restaurant", "partner_yrsed", "S1"))
+summary(data)
+data <-  drop_na(data)
+```
+
+##Zadanie 1.2 - random forest
+```{r,warning=FALSE, include=FALSE,echo=FALSE}
+library(mlr)
+task <- makeClassifTask(data = data, target = "S1")
+learnList <- listLearners("classif")
+lrn <- makeLearner("classif.ranger",predict.type = "prob")
+model <- train(lrn,task)
+summary(model)
+```
+
+##Zadanie 2 - wyznaczenie reszt
+```{r}
+predictions <- predictLearner(lrn,model,data)[,2] 
+residuals <- predictions - (as.numeric(data$S1)-1) 
+hist(residuals)
+```
+
+
+##Zadanie 3 - predictions:residuals plot
+```{r}
+plot_data_dfr <- data.frame(res = residuals, pred = predictions)
+ggplot(data = plot_data_dfr,aes(x = pred, y = res)) + 
+  geom_point() + geom_smooth(method = "loess") + geom_hline(yintercept = 0, colour = "red")
+
+```
+
+Lokalny trend reszt w funkcji odpowiedzi modelu jest daleki od stałej równej zero. Widać że model nie zwraca wartości większych niż 0.8, dlatego loess nie miał szans wrócić w okolice zera przy wysokich predykcjach. Ponieważ maksymalna wartość random forest na zbiorze treningowym jest maksymalna wartością zwracaną z modelu można przeskalować trepdykcje. Niestety tym rozwiązaniem spowodujemy, że podawane przez model wartości nie będą już estymatorami prawdopodobieństw wystąpnienia danej klasy. Na obronę tego pomysły można zauważyć że już teraz estymacje prawdopodobieństw są błędne. Loess w punkcie 0.5 jest silnie poniżej 0 co wskazuje na większe występowanie klasy '1' niż '0' wśród obserwacji dla których przewidzana została wartość w okolicy 50%.   
+
+
+##Zadanie 4 - partner_yrsed:residuals plot
+```{r}
+plot_data_dfr <- data.frame(res = residuals, yrsed = data$partner_yrsed)
+
+ggplot(data = plot_data_dfr,aes(x = yrsed, y = res)) +
+  geom_point() + geom_smooth() + geom_hline(yintercept = 0, colour = "red")
+```
+
+Błędy w funkcji zmiennej 'yrsed' rozkładają się równo wokół prostej równiej 0. Widzimy zatem, że model dobrze przewiduje prawdopodobieństwa przynależności do klasy w dla wszystkich wartości 'yrsed'. 
+
+```{r}
+cook_dist <- numeric(nrow(data))
+for(i in 1:nrow(data)){
+  data_i <- data[-i,]
+  task <- makeClassifTask(data = data_i, target = "S1")
+  model <- train(lrn,task)
+  predictions_i <- predictLearner(lrn,model,data)[,2] 
+  cook_dist[i] <- ((predictions_i - predictions)^2) %>% sum
+}
+
+data_plot_dfr <- data.frame(cook= cook_dist, obs = as.factor(1:nrow(data)))
+p <- ggplot(data = data_plot_dfr) + geom_point(aes(x = obs, y = cook))
+ggplotly(p)
+```
+
+Random forest buduje głębokie drzewa, dlatego może się zadarzyć że kilka obserawcji będące szumem, przy korzystnym wylosowaniu bootstrapowym, mogą stworzyć własny liść. Taki liść uczestniczy potem w uśrednianiu po drzewach i może znacząco zaburzać predykcję innych obserwacji w tym obszarze. Najwyższą wartość Cook'a osiągnęła obserwacja 615. Poniżej zamieszczam próbę wyjaśnienia jej isotności.
+```{r}
+data[615,]
+predictions[615]
+dist_mat <- dist(data[,-5]) %>% as.matrix
+closest <- data.frame(dist = dist_mat[615,], n = 1:nrow(data)) %>% arrange(dist) %>% head(10)
+cbind(data,predictions)[closest$n,]
+
+cook_dist[2259]
+cook_dist[615]
+
+```
+
+
+Prawdopodobieństwo przynależności obserwacji '615' do klasy '2' wynosi '0.5', widzimy że istnieje jeszcze jedna obserwacja bardzo blisko polożona(w przestrzeni euklidesowej), która również pochodzi z klasy '2'. Kolejne kilkanaście obserwacji (obserwacje posortowane wg odlełości od '615') należą już do klasy '1'. Odpowiedzi modelu dla nich są dość niskie. Takie zachowanie może świadczyć o overfitingu (dopasowanie modelu do dwóch obserwacji, mimo że w otoczeniu przeważa klasa '1'). Co ważne, próba dopasowania się modelu do tych obserwacji powoduje zwiększenie wartośći również obserwacją w ich otoczeniu. Zapewne dlatego usunięcie tej obserwacji (uniemożliwienie budowania liścia dla klasy '2' w tym miejscu przestrzeni atrybutów) powoduje dużą predykcji modelu. Za tą hipotezą przemawia również wysoka wartość drugiej obserwacji z klasy '2' położonej blisko '615' tj. '2259' (Cook = 0.33).
+

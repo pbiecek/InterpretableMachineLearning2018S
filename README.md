@@ -19,12 +19,13 @@ Plan spotkań na semestr letni
 * 2019-03-08  **Wspólne spotkania projektowe** - wprowadzenie (wielka piątka)
 * 2019-03-15  Wankardu Plots, Accumulated Local Effects [AL_iml](https://christophm.github.io/interpretable-ml-book/ale.html), [ALE_pap](https://cran.r-project.org/web/packages/ALEPlot/vignettes/AccumulatedLocalEffectPlot.pdf)
 * 2019-03-22  [SHAP](http://papers.nips.cc/paper/7062-a-unified-approach-to-interpreting-model-predictions.pdf), [PM_VEE](https://pbiecek.github.io/PM_VEE/shapley.html), [IML](https://christophm.github.io/interpretable-ml-book/shapley.html) i [Break Down](https://pbiecek.github.io/PM_VEE/breakDown.html) (z interakcjami) 
-* 2019-03-29  LIME i localModel
+* 2019-03-29  [LIME](https://github.com/marcotcr/lime#lime) i localModel
 * 2019-04-05  **Wspólne spotkania projektowe** - oddanie I (wielka piątka) - MIM godziny 9-12
-* 2019-04-12  Model agnostic variable importance - analiza Champion-Challenger
-* 2019-04-26  Auditor
+* 2019-04-12  [Model agnostic variable importance](https://pbiecek.github.io/PM_VEE/variableImportance.html) - analiza Champion-Challenger
+* 2019-04-26  [Auditor](https://arxiv.org/abs/1809.07763)
 * 2019-05-13  **Oddanie projektu** - elektronicznie bez spotkania
-* 2019-05-17  Anchors i SAFE
+* 2019-05-10  Anchors i [SAFE](https://arxiv.org/abs/1902.11035) (MiNI PW)
+* 2019-05-17  Anchors i [SAFE](https://arxiv.org/abs/1902.11035) (MIM UW)
 * 2019-05-24  Concept drift, variable drift i interactive explanations
 * 2019-05-31  Saliency maps, XAI dla obrazów i tekstu
 * 2019-06-07  **Wspólne spotkania projektowe** - prezentacje (wielka piątka)
