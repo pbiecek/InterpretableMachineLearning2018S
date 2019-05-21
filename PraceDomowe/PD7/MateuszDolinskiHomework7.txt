@@ -1,0 +1,26 @@
+###################
+Co nie dzia³a?
+###################
+1. I would like Jack
+tell me more about Jack
+
+Ostatnie zdanie nie podaje opisu zmiennych Jacka
+
+2. jack
+passenger information
+what if he had 1st class? lub what if jack had spouse abroad?
+
+Wyskakuje mi CP plot dla wieku
+
+3. what if age and class change?
+
+Tworzy wykres CP tylko dla wieku
+
+4. Trzeba bardzo dokladnie podawac wartosci zmiennych w przypadku proby ich zmiany.
+
+###################
+Co mo¿e byæ lepiej?
+###################
+1. Bot móg³by rysowaæ dwuwymiarowe CP ploty w odpowiedzi na interakcje.
+2. Bot móg³by korzystaæ z LIME, aby przybli¿aæ prawdopodobieñstwo prze¿ycia prostym modelem dla podobnych jednostek (would similar people to me survive?).
+
