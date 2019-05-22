@@ -1,0 +1,16 @@
+1.
+--> What if I were from Southampton?
+Creating an age plot
+
+--> Did my 2-year-old child survive?
+Counting my chance of survival without using information about age
+
+--> How old should I be to get the best score?
+Creating a class plot
+
+--> 
+
+2.
+--> How could I survive by using LIME
+
+--> ALE plot
