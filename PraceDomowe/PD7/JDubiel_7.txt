@@ -1,6 +1,6 @@
 1. Przykładowe niezrozumiane dialogi
---> What if I were from Southampton?
-Creating an age plot
+--> What if I was from Southampton?
+Creating an age CP plot
 
 --> Did my 2-year-old child survive?
 Counting my chance of survival without using information about age
@@ -9,14 +9,18 @@ Counting my chance of survival without using information about age
 Creating a class plot
 
 --> age 200
-Bot calculate probability of survival despite of unreasonable data (but it recognizes negative age)
+Bot calculate the probability of survival despite unreasonable data (but it recognizes negative age)
 
 
 2. Co mógłby robić więcej?
---> bot mógłby reagować na prośbę o narysowanie LIME
+--> Did people who were similar to me survive?
+bot mógłby reagować na prośbę o narysowanie LIME
 
---> możliwość rysowania wykresów ALE, aby ograniczyć korelację zmiennych lepiej niż w PDP
+--> What number of siblings made that people were alive? 
+możliwość rysowania wykresów ALE, aby ograniczyć korelację zmiennych lepiej niż w PDP
 
---> więcej informacji na początku dialogu, jakie mamy możliwości
+--> What tools can I use?
+więcej informacji na początku dialogu, jakie mamy możliwości
 
---> wykres PDP dla dwóch cech z wykorzystaniem heatmapy
+--> What range of age and number of siblings is the best to survive?
+wykres PDP dla dwóch cech z wykorzystaniem heatmapy
