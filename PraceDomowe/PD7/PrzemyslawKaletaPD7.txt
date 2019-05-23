@@ -1,0 +1,24 @@
+> I'm sorry. It looks like you would've died on Titanic. Your chance of survival equals 0.2226
+> It's a shame
+> Sorry, I don't understand yet. But I'll learn from this conversation and improve in the future!
+
+> What is a break down plot?
+> Specify a variable name for which you want to know more details
+
+> How did you construct this plot?
+> Creating a plot. It may take a few seconds...
+
+> Let's say I am 1500 years old
+> Good news! You would've survived the disaster. Your chance of survival equals 0.7594
+(Można by sprawdzać czy zmienne są w rozsądnych granicach.)
+ 
+> What if i were from different city?
+(Plot dla zmiennej age)
+
+> What if I traveled with more children?
+(Plot dla zmiennej age)
+
+> How do you predict what is my chance of survival?
+> Good news! You would've survived the disaster. Your chance of survival equals 0.9473
+
+Ogólnie bot radzi sobie zaskakująco dobrze w rozumieniu tego co piszę, te kilka rzeczy których nie zrozumiał nie są aż tak irytujące. Przydałoby się na przykład, gdyby był w stanie wyjaśnić co oznacza break down plot (którego tak chętnie rysuje, nawet gdy go o to nie proszę) i jak on działa. Umie odpowiedzieć na dużo pytań. Fajnie, że umie narysować PDP plot gdy go o to poproszę.
