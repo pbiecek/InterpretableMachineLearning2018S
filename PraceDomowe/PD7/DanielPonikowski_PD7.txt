@@ -1,0 +1,87 @@
+Zrozumiane:
+
+>> what do you know about me?
+Age is not defined
+Gender is not defined
+Fare is not defined
+Class is not defined
+Number of parents/children is not defined
+Number of siblings/spouse is not defined
+Place of embarkment is not defined
+
+
+
+>> I'm 23 years old
+I'm sorry. It looks like you would've died on Titanic. 
+Your chance of survival equals 0.2217
+
+
+>> what do you know about me?
+Age: 23
+Gender is not defined
+Fare is not defined
+Class is not defined
+Number of parents/children is not defined
+Number of siblings/spouse is not defined
+Place of embarkment is not defined 
+
+>>I want start from the begining
+Let's start from the beginning! 
+
+Teraz po pytaniu o mnie, zmienne s¹ wyzerowane, czyli zrozumia³ o co mi chodzi.
+
+>>Why Jack hasn't survived?
+Creating a plot. It may take a few seconds... 
+
+Otrzymuje Break down plot, czyli informacje co wplynelo na niskie prawdopodobienstwo
+przezycia katastrofy.
+
+Kolejny plus:
+Po podaniu wieku i spytaniu o to czy bêd¹c m³odszym mia³bym wiêksze szanse na prze¿ycie
+dostajê ceteris paribus zmiennej wiek. Ciekawiej by³oby, jakby oprócz wykresu podawa³ tak¿e
+wiek dla którego mia³bym najwiêksze szanse na prze¿ycie.
+
+
+Brak zrozumienia:
+
+
+Problem z wprowadzeniem wartosci dla dwóch zmiennych w jednym zdaniu np.
+
+>> I'm 23 years old man.
+I'm sorry. It looks like you would've died on Titanic.
+Your chance of survival equals 0.2217
+>>what do you know about me
+Age: 23
+Gender is not defined
+Fare is not defined
+Class is not defined
+Number of parents/children is not defined
+Number of siblings/spouse is not defined
+Place of embarkment is not defined
+
+
+Brak zrozumienia pytania o dane dotyczace innych pasazerow (podaje informacje na temat
+"obecnego" pasa¿era)
+
+>>Do you have information about other passangers?
+Age is not defined
+Gender is not defined
+Fare is not defined
+Class is not defined
+Number of parents/children is not defined
+Number of siblings/spouse is not defined
+Place of embarkment is not defined 
+
+Brak informacji na temat waznosci zmiennych, po pytaniu "Which variable impacts the most on the result?" 
+otrzymuje break down dla "obecnego" pasazera (czyli wytlumaczenie odpowiedzi modelu dla "obecnego" 
+pasazera), ciekawiej by bylo otrzymac informacje na temat wplywu zmiennych na calym zbiorze danych 
+(np. uzywajac metody z permutacjami). 
+
+
+
+
+
+
+
+
+
