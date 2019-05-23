@@ -1,0 +1,84 @@
+---
+title: "WUM Praca domowa 7"
+author: "Katarzyna Spalińska"
+date: "22 maja 2019"
+output: html_document
+---
+
+## Rozmowa z chat-botem https://kmichael08.github.io
+
+-----------------------------
+
+
+
+
+### 1. Czego bot nie zrozumiał a powinien?
+
+----------
+
+- Na początku wybrałam istniejącą już osobę, Rose. Bot niestety nie zrozumiał pytania "How old was Rose?", dowiedziałam się o wartościach jej zmiennych dopiero po pytaniu "Can I give you personal details to predict?" - czyli też nie do końca takie były moje intencje, ale w odpowiedzi dostałam charakterystykę Rose. Później odkryłam, że mogłam po prostu zadać pytanie "what do you know about me?" i również otrzymałabym odpowiedź na wcześniejsze pytanie o wiek Rose.
+
++ Szczęśliwie na pytanie "Can we predict my chances?" (jako Rose) odpowiedź była dokładnie taka jak być powinna.
+
++ Bot poprawnie odczytał moje intencje po pytaniu "Can I change age?" - zapytał mnie ile mam lat a potem dał mi odpowiedź o tym jakie są moje szanse przeżycia z nowym (starszym) wiekiem. Również poniekąd poprawnie zinterpretował pytanie "The chance is lower now, why?" odpowiadając wykresem Break Down - jednak moje pytanie bardziej kładło nacisk na wpływ zmiany wieku na zmianę predykcji, więc może bardziej pasowałby wykres Ceteris Paribus?
+
+- z niezrozumiałych dla mnie przyczyn na pytanie "Older age means lower chance to survive?" dostałam w odpowiedzi wykres Ceteris Paribus ale dla zmiennej "class". Wtedy dowiedziałam się też, że mogę zadawać pytania "What if.." dla wybranych zmiennych i te pytania dawały satysfakcjonujące odpowiedzi.
+
++ Po mojej prośbie o zmianę wartości płeć bot zrozumiał moje pytanie "Why gender changes the chances so much?" odpowiadając wykresem Break Down; tak samo odpowiedział na pytanie "Which variable has most impact on prediction?", co uważam za poprawną interpretację.
+
+
++ Zrozumiał również pytanie "What if gender was different", odpowiadając wykresem Ceteris Paribus - może jednak byłby on bardziej czytelny, gdyby skala zaczynała się od 0?
+
+<br /> 
+Wykres Ceteris Caribus dla płci:
+
+![](ceteris_paribus.png)
+
+<br /> 
+
+- na początku wybrałam charakter Rose, a potem chciałam zostać Jackiem, ale niestety bot nie zrozumiał prośby "Can I be Jack now?"..
+
+
+
+### 2. Jakie nowe intencje mógłby rozpoznawać lepiej? 
+
+---------------------------
+
+2.1. Mógłby znać nieco więcej pytań proszących o przypomnienie wartości poszczególnych zmiennych. Oczywiście po odkryciu pytania "What do you know about me?" można uzyskać dokładnie ten sam efekt, ale myślę że mogłoby to dodać rozmowie naturalności.
+
+  Poprawnie odpowiada na pytania:
+
+  - "How old am I?"
+
+  - "What do you know about me?"
+
+
+  Niepoprawnie:
+
+  - "What is my age?"
+
+  - "What is my gender?"
+
+  - "How old was Rose?" (przy czym "How old IS Rose?" działa poprawnie)
+
+<br /> 
+
+2.2. Mógłby znać odpowiedzi na pytania:
+
+- "Can you explain/tell me what is Break Down plot?". 
+
+Przy pojawieniu się wykresu pojawia się krótki opis, ale mimo wszystko ktoś mógłby chcieć dowiedzieć się więcej.
+
+<br /> 
+
+2.3. Mógłby znać odpowiedzi na pytania:
+
+- What is worst/best scenario?
+
+W kontekście tego jakie powinny być wartości zmiennych, aby dać możliwie najwyższe/najniższe predykcje
+
+
+
+
+
+
