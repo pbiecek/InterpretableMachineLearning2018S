@@ -1,0 +1,158 @@
+---
+title: "Praca domowa 1"
+author: Mateusz Dolinski
+date: 05.03.2019
+output:
+  html_notebook:
+  theme: united
+toc: yes
+toc_float: yes
+editor_options: 
+  chunk_output_type: inline
+---
+  
+```{r setup, include=FALSE}
+library(pacman)
+p_load(randomForest, 
+       tidyverse,
+       haven,
+       utils,
+       DALEX,
+       ceterisParibus,
+       install=FALSE)
+```
+
+# Wczytanie danych
+
+Na poczatek sciagamy zip z danymi do tymczasowego pliku:
+
+```{r download zip, echo=TRUE, results = 'hide'}
+url <- 'https://stacks.stanford.edu/file/druid:hg921sg6829/HCMST_2017_public_data_v1.1_stata.zip'
+temp <- tempfile()
+download.file(url,
+              temp)
+```
+
+Nastepnie wczytujemy dane przy pomocy pakietu **haven**:
+  
+```{r load data}
+DATA <- read_stata(unzip(temp))
+rm(temp)
+```
+
+# Eksploracja
+
+Wyciągnijmy zmienną celu oraz wybrane zmienne objaśniające. Są to:
+  
+  * Q9: How old is [Partner name]?
+  * Q19: Are you currently living with [Partner name]? (1 - yes, 2 - no)
+* Q26: Did you and [Partner name] attend he same college or university? (1 - yes, 2 - no)
+* ppage: Age
+
+Zmienna celu jest:
+  
+  * S1: Are you married? (1 - yes, 2 - no)
+
+Usuniete zostana rekordy z brakami danych lub odmowa odpowiedzi na ktores z uwzglednionych pytan. Po czyszczeniu pozostalo 1595 obserwacji.
+
+```{r column choice}
+columns <- c('S1', 'Q9', 'Q19', 'Q26', 'ppage')
+DATA.TRAIN <- DATA %>%
+  select(columns) %>%
+  filter(Q26 > 0) %>%
+  filter(complete.cases(.)) %>%
+  mutate(S1    = as.factor(S1 - 1),
+         Q19   = as.factor(Q19 - 1),
+         Q26   = as.factor(Q26 - 1),
+         Q9    = as.numeric(Q9),
+         ppage = as.numeric(ppage))
+```
+
+# Trening i wizualizacja 
+
+Trenujmy las losowy:
+  
+```{r model train}
+set.seed(1)
+rf_model <- randomForest(S1 ~ .,
+                         data = DATA.TRAIN, 
+                         ntree=20, 
+                         maxmodes=5)
+y_pred <- predict(rf_model, DATA.TRAIN[, -1])
+conf.matrix <- table(DATA.TRAIN$S1, y_pred)
+acc <- sum(diag(conf.matrix)) / sum(conf.matrix)
+print(sprintf('Accuracy equals to %2.4f', acc))
+```
+
+Policzmy scory oraz reszty z otrzymanych predykcji:
+  
+```{r residuals, fig.align="center", warning=FALSE}
+y_pred_proba <- predict(rf_model,
+                        DATA.TRAIN[, -1], 
+                        type = 'prob')
+
+residuals <- (as.numeric(DATA.TRAIN$S1) - 1) - y_pred_proba[, 2]
+
+visualize.residuals <- function(residuals, variable, variable_name){
+  PLOT.DATA <- data.frame(variable = variable,
+                          residuals = residuals)
+  
+  ggplot(data = PLOT.DATA,
+         aes(x = residuals, y = variable)) + 
+    geom_point() + 
+    geom_jitter() +
+    geom_smooth(method = "gam") + 
+    geom_hline(yintercept = 0, colour = "blue") + 
+    xlab('residuals') +
+    ylab(variable_name) +
+    ggtitle(paste('Residuals vs ', variable_name, sep = '')) +
+    theme(plot.title = element_text(hjust = 0.5))
+}
+```
+
+Na poczatek rysujemy wykres pomiedzy reszta a wynikiem modelu:
+
+```{r m, fig.align="center", warning=FALSE}
+visualize.residuals(residuals, y_pred_proba[, 2], 'score')
+```
+
+oraz wykresy pomiedzy reszta modelu a zmienna ppage:
+  
+```{r cp bothR, fig.align="center", warning=FALSE}
+visualize.residuals(residuals, DATA.TRAIN$ppage, 'ppage')
+```
+
+W obydwu przypadkach krzywe lokalnego trendu mają nachylenie zerowe, lecz ich wyraz wolny jest niezerowy.
+
+Na koniec policzmy wartości Cooka dla każdej obserwacji:
+
+```{r cook, fig.align="center", warning=TRUE}
+compute.cook.distances <- function(data){
+  output <- vector(mode = 'numeric', length = 0)
+  for (row in 1:nrow(data)){
+    tmp_data = data %>%
+      filter(row_number() != row)
+    tmp_rf <- randomForest(S1 ~ .,
+                           data = tmp_data, 
+                           ntree=20, 
+                           maxmodes=5)
+    predictions <- predict(tmp_rf, 
+                           tmp_data,
+                           type = 'prob')
+    output <- c(output, sum(((as.numeric(tmp_data$S1) - 1) - predictions[, 2])^2))
+  }
+  output
+}
+
+cook.distance <- compute.cook.distances(DATA.TRAIN)
+COOK.DF <- data.frame(cook = cook.distance, obs = c(1:length(cook.distance)))
+
+ggplot(data = COOK.DF) + 
+  geom_point(aes(x = obs, y = cook)) +
+    xlab('observation number') +
+    ylab('cook distance') +
+    ggtitle('Cook distances') +
+    theme(plot.title = element_text(hjust = 0.5))
+
+```
+
