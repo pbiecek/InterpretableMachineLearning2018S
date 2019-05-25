@@ -1,0 +1,21 @@
+#Co dzia³a Ÿle?#
+
+#Fajnie by³oby jakby bot podawa³ podstawowe informacje o modelu
+
+>how many variables are used in model?
+>The predictions are made by a Random Forest model 
+
+>what type of variables are used in model? 
+<The predictions are made by a Random Forest model 
+
+>what does intercept mean? 
+<Specify a variable name for which you want to know more details
+
+#Gdy podaje wiek i pytam jak zmieni³oby siê pstwo gdybym byla mezczyzna/kobieta to bot wyrzuca Ceteric Paribus dla p³ci, ale
+#nie uwzglednia wowczas podnageo wieku. Testowalam dla roznych wiekow, wyrzuca dokladnie takie same wykresy. 
+
+#co mozna poprawic#
+
+Kiepsko dzia³a funkcjonalnoœæ "co gdybym" miala 30 lat, byla mezczyzna/kobieta itp. - bot nie wychwytuje wczesniej ustalonych zmiennych.
+
+Mozna dodac jakis opis jak czytac wykresy - co one oznaczaja.
