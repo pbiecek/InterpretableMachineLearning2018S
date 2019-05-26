@@ -1,0 +1,21 @@
+Praca domowa 7
+Daria Hubernatorova
+1. Czego bot nie zrozumiał?
+#what can you plot?
+Pokazuje ceteris paribus dla wieku.
+Oczekiwaniem była odpowiedź jak na pytanie what can you do?
+Zostało zauważone że wszystkie pytania ze słowem plot dają ceteris paribus dla wieku jeśli nie zostanie podana inna zmienna.
+Przykłady:
+plot ale
+plot pdp
+What if Jack had 17 years?
+what if age would be 40?
+#78
+podanie wartości pokazuje szansę przeżycia, ale nie wiadomo jaka zmienna była ustawiona. Potrzebny jest wybór wcześniejszy zmiennej albo podanie w odpowiedzi dla jakich wartości jest wyliczona szansa.
+#plot Jack
+oczekiwaniem był ceteris paribus dla Jacka jak to było w przypadku plot Rose, ale bot bierze wcześniej wybrane wartości a w pytaniu było słowo plot i dlatego się pojawia CP dla wieku.
+
+2. Nowe intencje
+Odpowiedzi na pytania what if class would be 2nd? what if Jack had 17 years? etc.
+inne wykresy niż Ceteris Paribus i Break down, np. ALE plot.
+Więcej wstępnej informacji co można zapytać
