@@ -1,0 +1,171 @@
+---
+title: "hm8"
+author: "Robert Benke"
+date: "23 maja 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo=FALSE, message=FALSE}
+library(data.table)
+library(xgboost)
+library(keras)
+library(rlang)
+library(tidyverse)
+
+ALE <- function(model, data, variable,n_bins){
+    # Stworzenie wektora group (grupy równoliczne, pozostałe obserwacje
+  # trafiają do ostatniej grupy)
+  groups <- data %>% nrow() %>% 
+    "/"(n_bins) %>% floor() %>% rep(x = 1:n_bins) %>% 
+    sort() %>% c(rep(n_bins,dim(data)[1]/n_bins))
+  
+  groups <-c(groups, rep(n_bins,nrow(data) - length(groups)))
+  # Sortowanie zbioru po zmiennej i przydzielenie grup
+  data <- data %>% dplyr::arrange(!!sym(variable)) %>% 
+    mutate(group = groups[1:dim(data)[1]])
+  # wartości graniczne dla przedziałów
+  breaks <- data %>% group_by(group) %>% 
+    summarise(m = min(!!sym(variable))) %>% 
+    "["("m") %>% unlist() 
+  breaks <-c(breaks, max(data[,variable])) %>% as.vector()
+  # środki przedziałów
+  mid_breaks <- cbind(breaks,lead(breaks)) %>% 
+    rowMeans %>% "["(1:n_bins)
+  
+  # dane z podstawionymi lewymi i prawymi końcami przedziałów dla grup
+  dataLOW <- data %>% mutate(!!sym(variable) := breaks[group]) %>% 
+    select(-c(group))
+  dataHIGH <- data %>% mutate(!!sym(variable) := breaks[group+1]) %>% 
+    select(-c(group))
+  #wyliczenie ALE dla przedziałów
+  ALE_results <- data %>% mutate(low := predict(model,as.matrix(dataLOW[,-4])),
+                                 high := predict(model,as.matrix(dataHIGH[,-4]))) %>%
+    mutate(change := high - low) %>% group_by(group) %>% 
+    summarise(meanChange = mean(change, na.rm = TRUE)) %>% 
+    select(meanChange)  %>% cbind(mid_breaks) %>% 
+    mutate(cum_meanChange := cumsum(meanChange),mean_cum = mean(cum_meanChange)) %>% 
+    mutate(cum_meanChange := cum_meanChange - mean_cum)
+  unique(ALE_results[,-c(1,4)])
+}
+
+```
+
+# Read data - quake.csv
+
+### https://www.openml.org/d/209
+
+```{r}
+
+quake_dfr <- fread("quake.csv")
+
+test_quake_dfr <- quake_dfr[ind <<- sample(1:nrow(quake_dfr), 400, replace = FALSE),]
+train_quake_dfr <- quake_dfr[-ind,]
+
+```
+
+## model 1 - neural network 3-8-12-1
+
+```{r, message=FALSE}
+
+model <- keras_model_sequential() 
+model %>% 
+  layer_dense(units = 6, activation = "relu", input_shape = c(3)) %>% 
+  layer_dense(units = 16, activation = "relu") %>%
+  layer_dense(units = 1, activation = "relu")
+
+model %>% compile(
+  loss = "mean_absolute_percentage_error",
+  optimizer = optimizer_rmsprop(),
+  metrics = "mae"
+)
+
+history <- model %>% fit(
+  as.matrix(train_quake_dfr[,-4]), train_quake_dfr$col_4, 
+  epochs = 60, batch_size = 200, 
+  validation_split = 0.2
+)
+
+prediction_NN <- predict(model,as.matrix(test_quake_dfr[,-4]))
+result_NN <- sum((prediction_NN - test_quake_dfr$col_4)^2)/nrow(test_quake_dfr)
+result_NN
+```
+
+## model 2 - XGBoost
+
+```{r, message=FALSE}
+
+model_xgb <- xgboost(as.matrix(train_quake_dfr[,-4]), label = train_quake_dfr$col_4, nrounds = 200, verbose = FALSE)
+prediction_xgb <- predict(model_xgb, as.matrix(test_quake_dfr[,-4]))
+result_xgb <- sum((prediction_xgb - test_quake_dfr$col_4)^2)/nrow(test_quake_dfr)
+result_xgb
+```
+
+## model 3 - linear model
+
+```{r}
+
+model_lm <- lm(col_4~. , data = train_quake_dfr)
+prediction_lm <- predict(model_lm, test_quake_dfr)
+result_lm <- sum((prediction_lm - test_quake_dfr$col_4)^2)/nrow(test_quake_dfr)
+result_lm
+```
+
+Już tutaj widoczna jest przewaga prostego modelu liniowego nad modelami bardziej złożonymi. Modele liniowe są odporniejsze na przetrenowanie niż sieci neuronowe i xgboost. Nie mają tak dużych możliwości 
+dopasowania się do skomplikowanych zależności i nie modelują wpływu wspólnego kilku zmiennych, za to
+znacznie mniej różnią się pomiędzy próbami z populacji (mają małą wariancję, są stabilne). 
+
+### New features
+
+```{r}
+
+col1_dfr <- ALE(model, train_quake_dfr, "col_1", 200)
+col2_dfr <- ALE(model, train_quake_dfr, "col_2", 200)
+col3_dfr <- ALE(model, train_quake_dfr, "col_3", 200)
+
+par(mfrow=c(1,3))
+plot(col1_dfr$mid_breaks, col1_dfr$cum_meanChange, type = 'l')
+plot(col2_dfr$mid_breaks, col2_dfr$cum_meanChange, type = 'l')
+plot(col3_dfr$mid_breaks, col3_dfr$cum_meanChange, type = 'l')
+par(mfrow=c(1,1))
+
+
+library(changepoint)
+col1_cpt <- cpt.meanvar(col1_dfr$cum_meanChange, method = "PELT", pen.value = 0.05)
+col2_cpt <- cpt.meanvar(col2_dfr$cum_meanChange, method = "PELT", pen.value = 0.05)
+col3_cpt <- cpt.meanvar(col3_dfr$cum_meanChange, method = "PELT", pen.value = 0.05)
+
+breaks1 <- c(-Inf, col1_dfr$mid_breaks[col1_cpt@cpts], Inf)
+breaks2 <- c(-Inf, col2_dfr$mid_breaks[col2_cpt@cpts], Inf)
+breaks3 <- c(-Inf, col3_dfr$mid_breaks[col3_cpt@cpts], Inf)
+
+categorical_train_quake_dfr <- train_quake_dfr %>% mutate(col1 = cut(col_1, breaks1),
+                                                          col2 = cut(col_2, breaks2),
+                                                          col3 = cut(col_3, breaks3)) %>% 
+  select(col1,col2,col3,col_4)
+
+```
+
+# Model 4 - linear model with categorized variables
+
+```{r}
+
+model_lm_cat <- lm(col_4~., data = categorical_train_quake_dfr)
+
+
+categorical_test_quake_dfr <-test_quake_dfr %>% mutate(col1 = cut(col_1, breaks1),
+                                                            col2 = cut(col_2, breaks2),
+                                                            col3 = cut(col_3, breaks3)) %>% 
+  select(col1,col2,col3,col_4)
+prediction_lm_cat <- predict(model_lm_cat, categorical_test_quake_dfr)
+
+result_cat_lm <- sum((prediction_lm_cat - test_quake_dfr$col_4)^2)/nrow(test_quake_dfr)
+result_cat_lm
+```
+
+Średni błąd kwadratowy dla ostatnego modelu jest nieco wyższy niż dla zwykłej regresji liniowych co może być pewnym zaskoczeniem ponieważ wcześniej zauważyliśmy że błąd ten da się skutecznie ograniczać zmniejszając złożoność modelu (zmniejszając wariancję jednocześnie godząc się na możliwy nieco większy bias). Jednak gdy spojrzymy na liczbę stopnii swobody ostatniego modelu to jest ona wyższa niż zwykłego modelu liniowego. Zatem rzeczywiście, istnieje tutaj liniowa relacja pomiędzy złożonością modelu a estymacją błędu generalizacji. Ta relacja nie jest oczywista, szczególnie gdy patrzymy na ALE ploty zmiennych objaśniających. Idealny ALE plot dla regresji liniowej powinien przyjmować wartość stałą równą zero (nie jest to jednak warunek wystarczający, ponieważ nie bierze pod uwagę interakcji). 
+
