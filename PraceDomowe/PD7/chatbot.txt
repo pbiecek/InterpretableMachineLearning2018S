@@ -1,0 +1,27 @@
+> Hi, I'm Robert, I'm 24, male, and i have no siblings, 
+how possible is that I would survive titianic? 
+What If I would be 5 years older or younger?
+> dostaje Ceteris Paribus dla płci. Oraz Ceteris Paribus 
+dla wieku, z tytułem ' Your chances of survival dor age = 8 are (...)"
+Nie mam też potwierdzenia że zrozumiał inne zmienne tzn. płeć i rodzeństwo.
+
+>Hi, I'm Robert, I'm 24, male, and I do not have siblings,
+how possible is that I would survive at titianic?
+> I understood you travelled with 24 siblings and spouse altogether. (...)
+
+>What If I would be 60 years older?
+> wykres z przedziałem wieku od 0 do 70.
+
+>Am I under the mean survival rate?
+>(prośba o sperecyzowanie kolumny)
+
+>Why should I believe You?
+> (Break down plot)
+
+
+Mam średnie odczucia po korzystaniu z tego narzędzia, gdybym nie zauważył że 
+moje intencje zostały źle zrozumiane (a nie jest to łatwo dostrzec) to uwierzyłbym
+w nieprawdziwe informacje. Brakuje też wsparcia dla użytkowników wiedzących czego chcą.
+Na pytanie "What kind of explainers You know?' dostaje opis katastrofy. Wie o istnieniu 
+ALE plotów, ale niestety już nie ma pojecia o LIME i na pośbę o niego dostaje informację
+"creating a plot" i widzę Ceteris Paribus (zresztą chyba ulubiony plot tego bota).
