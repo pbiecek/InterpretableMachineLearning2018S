@@ -1,0 +1,142 @@
+---
+title: "DALEX dla lokalnych wyjaśnień"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Przygotowanie danych i modeli
+
+Poniższe przykłady dotyczą modeli zbudowanych w R.
+Ale można wszystkie te kroki też wykonać dla modeli zbudowanych w innych językach. Przykład znajduje się [tutaj](https://raw.githack.com/pbiecek/DALEX_docs/master/vignettes/Multilanguages_comparision.html).
+
+## Wczytanie modeli
+
+Wykorzystujemy bibliotekę `archivist` aby wczytać dwa modele predykcyjne dla danych Titanic. Moglibyśmy te modele zbudowac sami, ale częściej wyjaśniamy model zbudowany przez kogoś innego.
+
+```{r, warning=FALSE, message=FALSE}
+# 1. pobieramy model regresji logistycznej
+# titanic_lmr_v6 <- lrm(survived == "yes" ~ gender + rcs(age) + class + sibsp +
+#                         parch + fare + embarked, titanic)
+library("rms")
+explain_lmr_v6 <- archivist::aread("pbiecek/models/2b9b6")
+
+# titanic_rf_v6 <- randomForest(survived ~ class + gender + age + sibsp + parch + fare + embarked, 
+#                               data = titanic)
+library("randomForest")
+explain_rf_v6 <- archivist::aread("pbiecek/models/9b971")
+```
+
+## Obserwacja do wyjaśnienia
+
+```{r, warning=FALSE, message=FALSE}
+library("DALEX")
+henry <- archivist::aread("pbiecek/models/a6538")
+henry
+```
+
+# Ceteris Paribus
+
+Profile CP wygenerujemy pakietem `ingredients`.
+
+```{r, warning=FALSE, message=FALSE}
+library("ingredients")
+cp_titanic_lmr <- ceteris_paribus(explain_lmr_v6, henry)
+cp_titanic_lmr
+
+library("ggplot2")
+plot(cp_titanic_lmr, variables = c("age", "fare")) +
+  show_observations(cp_titanic_lmr, variables = c("age", "fare")) +
+  ggtitle("Ceteris Paribus Profiles", "For the logistic regression model and titanic dataset")
+```
+
+Możemy kontrolować gęstość siatki wykorzystywanej do wyznaczania zmiennej.
+
+```{r, warning=FALSE, message=FALSE}
+plot(cp_titanic_lmr, variables = c("class", "embarked"), only_numerical = FALSE) +
+  ggtitle("Ceteris Paribus Profiles", "For the logistic regression model and titanic dataset")
+
+cp_titanic_rf <- ceteris_paribus(explain_rf_v6, henry,
+                   variable_splits = list(age = seq(0, 70, 0.1),
+                                          fare = seq(0, 100, 0.1)))
+
+plot(cp_titanic_rf) + 
+  show_observations(cp_titanic_rf, variables = c("age", "fare"), size = 5) + 
+  ylim(0, 1) +
+  ggtitle("Ceteris Paribus Profiles", "For the random forest model and titanic dataset")
+```
+
+Możemy porównać profile dla dwóch osób. Co gdy są równoległe a co gdy nie są? Pokaże nam to addytywność modelu.
+
+```{r, warning=FALSE, message=FALSE}
+# dwie obserwacje
+johny_d <- archivist::aread("pbiecek/models/e3596")
+cp_titanic_rf2 <- ceteris_paribus(explain_rf_v6, rbind(henry, johny_d))
+
+plot(cp_titanic_rf2, color = "_ids_") + 
+  show_observations(cp_titanic_rf2, size = 5) + 
+  show_rugs(cp_titanic_rf2, sides = "bl", variables = c("age", "fare")) + 
+  scale_color_manual(name = "Passenger:", breaks = 1:2, values = c("#4378bf", "#8bdcbe"), labels = c("henry" , "johny_d")) 
+```
+
+Podobnie możemy porównać modele przeprowadzając analizę typu *Champion challanger*.
+
+```{r, warning=FALSE, message=FALSE}
+cp_titanic_rf <- ceteris_paribus(explain_rf_v6, henry)
+cp_titanic_lmr <- ceteris_paribus(explain_lmr_v6, henry)
+
+plot(cp_titanic_rf, cp_titanic_lmr, color = "_label_") +
+  show_observations(cp_titanic_rf, cp_titanic_lmr, color = "black", size = 5) +
+  scale_color_discrete(name = "Selected models:") + ylim(0,1) 
+```
+
+# Break Down
+
+## Break Down bez interakcji
+
+Addytywne wyjaśnienia oparte o kolejność.
+
+```{r, warning=FALSE, message=FALSE}
+library("iBreakDown")
+bd_rf <- break_down(explain_rf_v6,
+                 johny_d)
+bd_rf
+plot(bd_rf) 
+```
+
+Mniej zmiennych, dodanie rozkładu.
+
+```{r, warning=FALSE, message=FALSE}
+bd_rf_order <- break_down(explain_rf_v6,
+                 johny_d,
+                 order = c("class", "age", "gender", "fare", "parch", "sibsp", "embarked"))
+plot(bd_rf_order, max_features = 3) 
+
+bd_rf_distr <- break_down(explain_rf_v6,
+                 johny_d,
+                 order = c("class", "age", "gender", "fare", "parch", "sibsp", "embarked"),
+                 keep_distributions = TRUE)
+plot(bd_rf_distr, plot_distributions = TRUE) 
+```
+
+## Średnia po kolajnościach
+
+Odpowiednik SHAPa, średnia po różnych kolejnościach.
+
+```{r, warning=FALSE, message=FALSE}
+shap_johny <- shap(explain_rf_v6, johny_d, B = 25)
+plot(shap_johny) 
+```
+
+## Interakcja
+
+```{r, warning=FALSE, message=FALSE}
+library("iBreakDown")
+bd_rf <- break_down(explain_rf_v6,
+                 johny_d,
+                 interactions = TRUE)
+
+bd_rf
+
+plot(bd_rf) 
+```
