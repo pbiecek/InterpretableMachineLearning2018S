@@ -27,7 +27,7 @@ Plan spotkań na semestr letni
 * 2019-05-10  Anchors i [SAFE](https://arxiv.org/abs/1902.11035) (MiNI PW)
 * 2019-05-17  Anchors i [SAFE](https://arxiv.org/abs/1902.11035) (MIM UW)
 * 2019-05-24  Concept drift, variable drift i interactive explanations
-* 2019-05-31  Saliency maps, XAI dla obrazów i tekstu
+* 2019-05-31  [DALEX](DALEX_IML.Rmd)
 * 2019-06-07  **Wspólne spotkania projektowe** - prezentacje (wielka piątka)
 
 # Zasady zaliczenia
