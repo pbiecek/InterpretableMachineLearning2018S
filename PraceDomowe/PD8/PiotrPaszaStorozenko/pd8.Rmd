@@ -1,0 +1,187 @@
+---
+title: "PD8"
+author: "Piotr Pasza Storozenko"
+date: "24 05 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# PD8
+
+```{r echo=FALSE}
+library(tidyverse)
+library(mlr)
+library(changepoint)
+set.seed(1337)
+```
+
+```{r echo=FALSE}
+df <- read_csv('file20385235375a.csv', col_types =  cols(
+  Xloc = col_double(),
+  Yloc = col_double(),
+  Landuse_1 = col_factor(),
+  Landuse_2 = col_factor(),
+  Landuse_3 = col_factor(),
+  Landuse_4 = col_factor(),
+  Rock_1 = col_factor(),
+  Rock_2 = col_factor(),
+  Rock_3 = col_factor(),
+  Rock_4 = col_factor(),
+  Rock_5 = col_factor(),
+  Cr = col_double(),
+  Ni = col_double(),
+  Pb = col_double(),
+  Zn = col_double(),
+  Cd = col_double(),
+  Co = col_double(),
+  Cu = col_double()
+))
+n <- nrow(df)
+train_inds <- sample(n, 0.8*n)
+df_train <- df[train_inds,]
+df_test <- df[-train_inds,]
+```
+
+```{r}
+task <- makeRegrTask(data=df_train, target = "Cu")
+
+l1 <- makeLearner('regr.ranger')
+l2 <- makeLearner('regr.gbm')
+l3 <- makeLearner('regr.lm')
+
+m1 <- train(l1, task)
+m2 <- train(l2, task)
+m3 <- train(l3, task)
+```
+
+
+# Pre safe train RMSE
+```{r}
+y_pred1 <- predict(m1, newdata = df_train)
+y_pred2 <- predict(m2, newdata = df_train)
+y_pred3 <- predict(m3, newdata = df_train)
+performance(y_pred1, rmse)
+performance(y_pred2, rmse)
+performance(y_pred3, rmse)
+```
+
+# Pre safe test RMSE
+```{r}
+y_pred1 <- predict(m1, newdata = df_test)
+y_pred2 <- predict(m2, newdata = df_test)
+y_pred3 <- predict(m3, newdata = df_test)
+performance(y_pred1, rmse)
+performance(y_pred2, rmse)
+performance(y_pred3, rmse)
+```
+
+# SAFE
+```{r}
+pdp <- function(df, model, j) {
+    sub_df <- as.data.frame(df)
+    l <- unique(sub_df[,j])
+    if(length(l) > 100){
+        mima <- range(l)
+        l <- seq(mima[1], mima[2], length.out = 100)
+    }
+    r <- sapply(l, function(i){
+        df_copy <- sub_df
+        df_copy[,j] <- i
+        getPredictionResponse(predict(model, newdata = df_copy))
+    })
+    data.frame(x = l, pdp = colMeans(r)) %>% arrange(x)
+}
+plot_pdp <- function(df, model, j) {
+    pdp(df, model, j) %>% 
+        ggplot(aes(x, pdp)) + 
+            geom_line() +
+            xlab(colnames(df)[j]) +
+            ylab("Prediction")
+    
+}
+```
+
+
+```{r cache = TRUE}
+df_train_safe <- df_train
+for (i in 1:(ncol(df_train_safe) - 1)) {
+    if(nrow(unique(df_train_safe[,i])) > 2){
+        df_pdp <- pdp(df_train, m1, i)
+        m1.amoc <- cpt.mean(df_pdp$pdp)
+        cngs <- df_pdp$x[cpts(m1.amoc)]
+        
+        new_vec <- numeric(nrow(df_train_safe))
+        if(length(cngs) > 0) {
+            for(j in 1:length(cngs)){
+                new_vec[df_train_safe[,i] > cngs[j]] <- j
+            }
+        }
+        df_train_safe[,i] <- new_vec
+    }
+}
+
+df_test_safe <- df_test
+for (i in 1:(ncol(df_test_safe) - 1)) {
+    if(nrow(unique(df_test_safe[,i])) > 2){
+        df_pdp <- pdp(df_train, m1, i)
+        m1.amoc <- cpt.mean(df_pdp$pdp)
+        cngs <- df_pdp$x[cpts(m1.amoc)]
+        
+        new_vec <- numeric(nrow(df_test_safe))
+        if(length(cngs) > 0) {
+            for(j in 1:length(cngs)){
+                new_vec[df_test_safe[,i] > cngs[j]] <- j
+            }
+        }
+        df_test_safe[,i] <- new_vec
+    }
+}
+```
+
+
+```{r}
+task_safe <- makeRegrTask(data=df_train_safe, target = "Cu")
+
+l1 <- makeLearner('regr.ranger')
+l2 <- makeLearner('regr.gbm')
+l3 <- makeLearner('regr.lm')
+
+m1 <- train(l1, task_safe)
+m2 <- train(l2, task_safe)
+m3 <- train(l3, task_safe)
+```
+
+# Post safe train RMSE
+```{r}
+y_pred1 <- predict(m1, newdata = df_train_safe)
+y_pred2 <- predict(m2, newdata = df_train_safe)
+y_pred3 <- predict(m3, newdata = df_train_safe)
+performance(y_pred1, rmse)
+performance(y_pred2, rmse)
+performance(y_pred3, rmse)
+```
+
+
+# Post safe test RMSE
+```{r}
+y_pred1 <- predict(m1, newdata = df_test_safe)
+y_pred2 <- predict(m2, newdata = df_test_safe)
+y_pred3 <- predict(m3, newdata = df_test_safe)
+performance(y_pred1, rmse)
+performance(y_pred2, rmse)
+performance(y_pred3, rmse)
+```
+
+
+
+# Summary
+
+This example is pretty interesting.
+From the pre SAFE part, we can see that GBM and RandomForest models were overfitted and linear model performed the best on a test data.
+Unfortunately exchanging normal features to SAFE features did not help any of models.
+The best is the linear model on unchanged data.
