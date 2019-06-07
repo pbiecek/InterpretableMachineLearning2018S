@@ -8,4 +8,4 @@ Grafika poniżej znajduje się również w formacie PDF.
 
 Schemat działania sieci:
 
-![](Projekt/grupa_3/neural_network/schemat.PNG)
+<img width="100%" src="./schemat.PNG">
