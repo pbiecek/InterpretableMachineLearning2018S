@@ -1,0 +1,114 @@
+---
+title: "PD7"
+author: "Piotr Pasza Storozenko"
+date: "23 05 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# PD7 -- Titanic chatbot
+
+## What does bot didn't understand / what functions should be added IMHO?
+
+Sometimes I didn't know if bot didn't understand me or what so I'll paste here some weird interactions.
+
+---------
+
+In the begining of the conversation:
+
+Me: Hi
+
+Bot: Hi
+
+Hello! I'm DrAnt, a Titanic survival bot. Let's see whether you would've survived on Titanic and discuss the model predictions.
+
+Bot: You might start by telling some details about you
+
+Bot: List variables and ask about their meaning at any time
+
+Bot: You might also start as Jack or Rose from the movie
+
+Me: Let's start from the movie!
+
+Bot: Let's start from the beginning!
+
+???
+
+----------
+
+Me: gender
+
+Bot: Gender either "male" or "female"
+
+Me: thanks
+
+Bot: Thanks for being nice ;) But this won't help you to survive on Titanic!
+
+Me: What could help me then?
+
+Bot: list all variablesdescribe the problemwhat do you know about 
+
+???
+
+----------
+
+Bot: I'm sorry. It looks like you would've died on Titanic. Your chance of survival equals 0.2343
+
+Me: That's bad, don't you think?
+
+Bot: Sorry, I don't understand yet. But I'll learn from this conversation and improve in the future!
+
+Bot: Click below if you need help
+
+???
+
+-----------
+
+![](titanic1.png)
+
+-----------
+
+![](titanic2.png)
+
+-----------
+
+![](titanic3.png)
+
+------------
+
+After asking about how changing of class could help me.
+
+![](titanic4.png)
+
+-------------
+
+Me: Tell me a joke!
+
+Bot: Sorry, I don't understand yet. But I'll learn from this conversation and improve in the future!
+
+Click below if you need help
+
+:(
+
+------------
+
+Me: Who would die for sure?
+
+Bot: You haven't specified the value for any variable - your chance of survival is an average chance across passengers [empty breakdown plot]
+
+Me: I'm 24, man, I'm rich and travel in first class but it doesn't matter.
+
+Bot: I'm sorry. It looks like you would've died on Titanic. Your chance of survival equals 0.2343
+
+Me: So who would die for sure?
+
+Bot: [Breakdown plot for me]
+
+## Conclusion
+
+Bot mostly understood me, that's great.
+
+I'd be pleased if this bot had options to present me optimal values for maximizing/minimizing survivability probability.
