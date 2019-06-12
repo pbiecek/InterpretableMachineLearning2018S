@@ -1,0 +1,52 @@
+Wymieszałem sekcje 1 i 2, gdyż nie mam pewności czego bot nie rozumie a powinien i czego nie rozumie, bo nie ma zaimplementowanej takiej możliwości. Poniżej wszystkie unikalne problemy jakie napotkałem:
+
+* 	User: describe variables
+	Bot: Specify a variable name for which you want to know more details
+	Oczekiwania: podobny efekt do "list all variables"
+
+* 	User: what is best age
+	Bot: Age in years.
+	Oczekiwania: informacja jaki wiek daje największe szanse przeżycia
+
+*	User: describe fares
+	Bot: Ticket fare in pounds.
+	Oczekiwania: podanie wartości minimalnej i maksymalnej dla fare
+
+*	User: maximum fare
+	Bot: Ticket fare in pounds.
+	Oczekiwania: podanie wartości maksymalnej dla fare
+
+*	User: what if fare is 20?
+	Bot: As far as I understand you've posed a what-if question. Please specify the variable you ask, as I failed to guess it.
+	Oczekiwania: Podanie prawdopodobieństwa przeżycia dla podanego fare nie zmieniając danych osobowych
+
+*	User: my fare
+	Bot: Creating a plot. It may take a few seconds... + wykres Centeris Paribus
+	Oczekiwania: podanie obecnej wartości fare
+
+*	User: how to maximize chances
+	Bot: Creating a plot. It may take a few seconds... + wykres Centeris Paribus dla class
+	Oczekiwania: Informacja jak ustawić parametry by szanse przeżycia były maksymalne
+
+*	User: maximize chances
+	Bot: Good news! You would've survived the disaster. Your chance of survival equals 0.766
+	Oczekiwania: Informacja jak ustawić parametry by szanse przeżycia były maksymalne
+
+*	User: plot all
+	Bot: As far as I understand you've posed a what-if question. Please specify the variable you ask, as I failed to guess it.
+	Oczekiwania: wszystkie wykresy jakie mogą zostać narysowane w danej chwili
+
+*	User: zoom in
+	Bot: Sorry, I don't understand yet. But I'll learn from this conversation and improve in the future!
+	Oczekiwania: przybliżenie poprzedniego wykresu do wartości zmiennej użytkownika
+
+*	User: plot siblings
+	Bot: I'm sorry. I'm not sure. How many siblings and spouse altogether you travelled with?
+	Oczekiwania: wykres Centeris Paribus dla siblings and spouse
+
+*	User: plot types
+	Bot: As far as I understand you've posed a what-if question. Please specify the variable you ask, as I failed to guess it.
+	Oczekiwania: wymienienie wszystkich typów wykresów jakie są dostępne
+
+Dodatkowo moim zdaniem warto informować użytkownika o możliwości generowania wykresów i ich typach. Mi odkrycie, że są tam dostępne wykresy zajęło ok. 10 minut rozmowy a odkrycie, że jest więcej niż jeden rodzaj kolejne 20. Nie mam pewności czy odkryłem wszystkie typy wykresów.
+	 
