@@ -1,0 +1,134 @@
+---
+title: "PD9"
+author: "Piotr Pasza Storozenko"
+date: "24 05 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(mlr)
+```
+
+```{r,message=FALSE}
+X <- read_delim('rotatingHyperplane.data', delim = ' ', col_names = FALSE)
+y <- read_delim('rotatingHyperplane.labels', delim = ' ', col_names = FALSE)
+colnames(y) <- c('y')
+y$y <- y$y %>% as.factor()
+df <- cbind(X, y)
+```
+
+```{r}
+df_pre <- df[1:20000,]
+df_post <- df[180001:200000,]
+```
+
+# Intersection distance for variables
+
+This is valid method for calculating intersection distance since variables have values from 0 to 1 only.
+
+```{r}
+res <-  c()
+for (i in 1:ncol(X)) {
+  c1 <- df_pre[,i]
+  c2 <- df_post[,i]
+  h1 <- hist(c1, col = "#00FF0055", xlab = paste("Feature", i), main ="Intersection distance")
+  h2 <- hist(c2, col = "#FFFF0055", add=TRUE)
+  n1 <- length(c1)
+  n2 <- length(c2)
+  res[i] <- 1 - sum(abs(h1$counts - h2$counts)) / (n1+n2)
+  text(0.4,100, paste0("Intersection distance:", res[i]), cex=1.4)
+}
+```
+
+The above plots show that the intersection distance is very small for every feature and they hadn't drifted.
+
+# Intersection distance for residuals
+
+```{r}
+task_pre <- makeClassifTask(data = df_pre, target = 'y', positive = 1)
+task_post <- makeClassifTask(data = df_post, target = 'y', positive = 1)
+```
+
+```{r}
+l1 <- makeLearner('classif.binomial', predict.type = 'prob')
+l2 <- makeLearner('classif.binomial', predict.type = 'prob')
+model_pre <- train(l1, task_pre)
+model_post <- train(l2, task_post)
+```
+
+```{r}
+y_pred1 <- df_post$y %>% as.numeric() - predict(model_pre, newdata = df_post) %>% getPredictionProbabilities() -1
+y_pred2 <- df_post$y %>% as.numeric() - predict(model_post, newdata = df_post)%>% getPredictionProbabilities() -1
+h1 <- hist(y_pred2, col = "#00FF0055", xlab = "Residuals", main ="Intersection distance")
+h2 <- hist(y_pred1, col = "#FFFF0055", add=TRUE)
+n1 <- length(y_pred1)
+n2 <- length(y_pred2)
+legend(.3,4500, legend = c("Model post", "Model pre"), fill = c("#00FF0055","#FFFF0055"))
+inter_dist <- 1 - sum(abs(h1$counts - h2$counts)) / (n1+n2)
+text(0,100, paste0("Intersection distance:", inter_dist), cex=1.4)
+```
+
+Here we can clearly see that residuals of the model trained on later data have a different shape and old model behaves poorly.
+
+# Area between PDP curves
+
+```{r}
+pdp <- function(df, model, j) {
+    sub_df <- df[1:2000,]#sample_n(df,2000)
+    l <- 1:100/100
+    r <- sapply(l, function(i){
+        df_copy <- sub_df
+        df_copy[,j] <- i
+        getPredictionProbabilities(predict(model, newdata = df_copy))
+    })
+    colMeans(r)
+}
+```
+
+```{r}
+coef1 <- getLearnerModel(model_pre)$coefficients
+coef2 <- getLearnerModel(model_post)$coefficients
+coef_df <- data.frame(coef = names(coef1), pre = coef1, post = coef2) %>% 
+  gather(key = "PartOfDataset", value = "Coef", -coef) %>% 
+  filter(coef!='(Intercept)')
+```
+
+```{r cache=TRUE}
+big_res <- sapply(1:10, function(i){
+    r1 <- pdp(df_post, model_pre, i)
+    r2 <- pdp(df_post, model_post, i)
+    c(mean(abs(r1-r2)))
+})
+```
+
+```{r}
+df <- data.frame(feature = colnames(X), pdp_area = big_res)
+ggplot(df, aes(x=feature, y=pdp_area)) +
+  geom_col() +
+  xlab("Feature") +
+  ylab("Between PDP Area") +
+  theme_minimal()
+```
+
+The bigger the area, the bigger the difference between models behaviors with a change in feature value.
+It clearly makes sense when we compare coefficients from both models.
+
+```{r}
+ggplot(coef_df, aes(coef, Coef, fill=PartOfDataset)) +
+  geom_col(position = "dodge") +
+  xlab("Corresponding feature") +
+  ylab("Coefficient value") +
+  theme_minimal() 
+  
+  
+```
+
+To sum up we can say that we observed conceptual drift and our old model behaves poorly.
+The biggest difference is on features X3, X6, X10.

@@ -1,0 +1,15 @@
+Praca domowa 7 - rozmowa z chat-botem na temat predycji.
+
+Źle zrozumiane:
+1) Na pytanie o pd plot wyświetlił mi ceteris paribus, tak samo przy metodzie break down
+2) Pytania o wagę/znaczenie danej zmiennej w modelu bardzo często kończyły się zdaniem "As far as I understand you've posed a what-if question. Please specify the variable you ask, as I failed to guess it." lub kazał podawać "Age in years"
+3) Trochę nie zrozumiałem wykresu po wpisaniu "show me gender pd plot", ale mogło to wynikać ze złych danych, które podałem wcześniej.
+4) Pytania związane z przedziałem w wieku. Nie wiedział gdy mówiłem o pstwie przeżycia gdy mam poniżej lub powyżej x lat.
+
+Nowe cechy chat-bota:
+1) Przy napisaniu czegoś w stylu "explain result" albo "explain it" mógłby wyświetlać cokolwiek, jakąś standardową informację dotyczącą poprzedniego wypisanego wyniku (jakiś plot czy coś)
+2) Nakazać wyplotować konkretną metodę którą napiszemy botowi, teraz wygląda to tak, że przy specyfikacji wykresu zawsze pokazywał mi ceteris paribus
+3) Fajnie by było dowiedzieć się jaka jest idealna klasa/wiek/... aby przeżyć, bo niestety ale nie udało mi się wydobyć takiej informacji mimo kilku pytań.
+
+Dodatkowe uwagi:
+1) Bardzo fajnie bot radzi sobie z "głupimi" odpowiedziami w stylu "age 2000", odnosząc się do wikipedii. Fajnie się to zachowuje.
